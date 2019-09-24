@@ -5,7 +5,7 @@ namespace App\Service;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Exception\ValidationException;
 
-class DtoValidatorHandler
+class DtoValidator
 {
     /** @var ValidatorInterface */
     private $validator;

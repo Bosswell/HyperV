@@ -3,7 +3,7 @@
 namespace App\Base\Controller;
 
 use App\Exception\ValidationException;
-use App\Service\DtoValidatorHandler;
+use App\Service\DtoValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use AutoMapperPlus\Configuration\AutoMapperConfig;
@@ -12,7 +12,7 @@ use League\Fractal\Manager;
 
 abstract class ApiController extends AbstractController
 {
-    /** @var DtoValidatorHandler */
+    /** @var DtoValidator */
     protected $dtoValidator;
 
     /** @var AutoMapper */
@@ -23,10 +23,10 @@ abstract class ApiController extends AbstractController
 
     /**
      * ApiController constructor.
-     * @param DtoValidatorHandler $dtoValidator
+     * @param DtoValidator $dtoValidator
      * @param Manager $fractalManager
      */
-    public function __construct(DtoValidatorHandler $dtoValidator, Manager $fractalManager)
+    public function __construct(DtoValidator $dtoValidator, Manager $fractalManager)
     {
         $this->dtoValidator = $dtoValidator;
         $this->fractalManager = $fractalManager;
