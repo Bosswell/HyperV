@@ -30,8 +30,3 @@ services:
 
     League\Fractal\Manager:
         public: true
-
-    App\Service\DtoValidatorHandler:
-        public: true
-            arguments:
-                $validator: Symfony\Component\Validator\Validator\ValidatorInterface
