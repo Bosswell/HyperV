@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  app:
+    container_name: testerv.app
+    environment:
+        - APACHE_DOCUMENT_ROOT=/var/www/html/public
+    ports: 
+        - 80:80
+    build: 
+        context: .
+    volumes:
+        - .:/var/www/html
+        - ./docker/config/vhost.conf:/etc/apache2/sites-available/000-default.conf

@@ -1,0 +1,8 @@
+App\Domain\User\Email:
+  type: embeddable
+  fields:
+    email:
+      type: string
+      length: 180
+      unique: true
+      nullable: false
