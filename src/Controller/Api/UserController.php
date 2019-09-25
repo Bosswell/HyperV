@@ -25,6 +25,7 @@ use App\Dto\User\UserRegister;
 class UserController extends ApiController
 {
     const REGISTER_MESSAGE = 'The user has been successfully created';
+    const ACTIVATE_MESSAGE = 'The user has been successfully activated';
 
     /**
      * TODO emmit event and send email to confirm
@@ -73,6 +74,29 @@ class UserController extends ApiController
         return new JsonResponse(
             $this->fractalManager->createData($resource)->toArray(),
             Response::HTTP_FOUND
+        );
+    }
+
+    /**
+     * Activation does not need any hash or checksum cuz of UUID
+     *
+     * @param User $user
+     * @param EntityManagerInterface $em
+     * @return JsonResponse
+     *
+     * @Route("/activate/{id}", name="get_one", methods={"PATCH"})
+     * @ParamConverter("user", converter="doctrine.orm", class="App\Entity\User")
+     */
+    public function activate(User $user, EntityManagerInterface $em)
+    {
+        $user->activate();
+        $em->persist($user);
+        $em->flush();
+
+        return new JsonResponse([
+            'message' => self::ACTIVATE_MESSAGE
+            ],
+            Response::HTTP_OK
         );
     }
 

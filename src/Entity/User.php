@@ -84,6 +84,11 @@ class User implements UserInterface
         $this->password = $encoder->encodePassword($this, $this->password);
     }
 
+    public function activate(): void
+    {
+        $this->isActive = true;
+    }
+
     /**
      * @return UuidInterface|string
      */
