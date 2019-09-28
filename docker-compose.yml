@@ -12,3 +12,15 @@ services:
     volumes:
         - .:/var/www/html
         - ./docker/config/vhost.conf:/etc/apache2/sites-available/000-default.conf
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: zaq1@WSX
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
