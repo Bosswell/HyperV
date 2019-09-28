@@ -1,7 +1,10 @@
+parameters:
+    env(DATABASE_URL): ''
+
 doctrine:
     dbal:
         driver: 'pdo_mysql'
-        server_version: '5.7'
+        server_version: 'mariadb-10.4.8'
         charset: utf8mb4
         default_table_options:
             charset: utf8mb4
@@ -14,10 +17,3 @@ doctrine:
         auto_generate_proxy_classes: true
         naming_strategy: doctrine.orm.naming_strategy.underscore
         auto_mapping: true
-        mappings:
-            App:
-                is_bundle: false
-                type: yml
-                dir: '%kernel.project_dir%/config/doctrine'
-                prefix: 'App\Domain'
-                alias: App

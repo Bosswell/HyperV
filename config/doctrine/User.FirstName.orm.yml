@@ -1,8 +1,0 @@
-App\Domain\User\FirstName:
-  type: embeddable
-  fields:
-    firstName:
-      type: string
-      length: 20
-      unique: false
-      nullable: false
