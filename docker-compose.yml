@@ -12,15 +12,24 @@ services:
     volumes:
         - .:/var/www/html
         - ./docker/config/vhost.conf:/etc/apache2/sites-available/000-default.conf
-  db:
-    image: mariadb
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: zaq1@WSX
 
-  adminer:
-    image: adminer
+  mariadb:
+    image: mariadb
+    container_name: mariadb
     restart: always
     ports:
-      - 8080:8080
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - /sessions
 
