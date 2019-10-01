@@ -6,8 +6,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 use App\Validator\Constraints\UniqueDto;
 
 /**
- * Class UserRegister
- * @package App\Dto\User
  * @UniqueDto(
  *     entityClass = "App\Entity\User",
  *     fields = {"email"},

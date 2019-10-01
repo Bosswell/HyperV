@@ -2,10 +2,10 @@
 
 namespace App\Base\Controller;
 
-use App\Exception\ValidationException;
+use App\Dto\User\UserRegister;
+use App\Entity\User;
 use App\Service\DtoValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 use AutoMapperPlus\Configuration\AutoMapperConfig;
 use AutoMapperPlus\AutoMapper;
 use League\Fractal\Manager;
@@ -21,11 +21,7 @@ abstract class ApiController extends AbstractController
     /** @var Manager */
     protected $fractalManager;
 
-    /**
-     * ApiController constructor.
-     * @param DtoValidator $dtoValidator
-     * @param Manager $fractalManager
-     */
+
     public function __construct(DtoValidator $dtoValidator, Manager $fractalManager)
     {
         $this->dtoValidator = $dtoValidator;
@@ -34,12 +30,11 @@ abstract class ApiController extends AbstractController
         $this->registerMapper();
     }
 
-    private function registerMapper()
+    private function registerMapper(): void
     {
-//        $config = new AutoMapperConfig();
-//        $config->registerMapping(UserRegister::class, User::class);
-//        $config->registerMapping(UserUpdate::class, User::class);
-//
-//        $this->mapper = new AutoMapper($config);
+        $config = new AutoMapperConfig();
+        $config->registerMapping(UserRegister::class, User::class);
+
+        $this->mapper = new AutoMapper($config);
     }
 }
