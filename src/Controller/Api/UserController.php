@@ -4,8 +4,11 @@ namespace App\Controller\Api;
 
 use App\Entity\User;
 use App\Base\Controller\ApiController;;
+
+use App\EventListener\UserListener;
 use App\Exception\ValidationException;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,6 +18,7 @@ use AutoMapperPlus\Exception\UnregisteredMappingException;
 use App\Transformer\UserTransformer;
 use League\Fractal\Resource\Item;
 use App\Dto\User\UserRegister;
+use App\Event\User\UserRegisteredEvent;
 
 /**
  * TODO implement confirm()
@@ -28,18 +32,18 @@ class UserController extends ApiController
     const ACTIVATE_MESSAGE = 'The user has been successfully activated';
 
     /**
-     * TODO emmit event and send email to confirm
-     * @param UserRegister $userRegister
-     * @param UserPasswordEncoderInterface $encoder
-     * @param EntityManagerInterface $em
-     * @return JsonResponse
      * @throws ValidationException
      * @throws UnregisteredMappingException
      *
      * @Route(name="register", methods={"POST"})
-     * @ParamConverter("userRegister", converter="command_converter", class="App\Application\Command\User\UserRegister")
+     * @ParamConverter("userRegister", converter="dto_converter", class="App\Dto\User\UserRegister")
      */
-    public function register(UserRegister $userRegister, UserPasswordEncoderInterface $encoder, EntityManagerInterface $em)
+    public function register(
+        UserRegister $userRegister,
+        UserPasswordEncoderInterface $encoder,
+        EntityManagerInterface $em,
+        EventDispatcherInterface $eventDispatcher
+    ): JsonResponse
     {
         $this->dtoValidator->validate($userRegister);
 
@@ -48,6 +52,7 @@ class UserController extends ApiController
 
         $em->persist($user);
         $em->flush();
+        $eventDispatcher->dispatch(new UserRegisteredEvent($userRegister));
 
         $resource = new Item($user, new UserTransformer());
 
@@ -61,13 +66,10 @@ class UserController extends ApiController
     }
 
     /**
-     * @param User $user
-     * @return JsonResponse
-     *
-     * @Route("/{id}", name="get_one", methods={"GET"})
+     * @Route("/{id}", name="get", methods={"GET"})
      * @ParamConverter("user", converter="doctrine.orm", class="App\Entity\User")
      */
-    public function getOne(User $user)
+    public function getOne(User $user): JsonResponse
     {
         $resource = new Item($user, new UserTransformer());
 
@@ -80,14 +82,10 @@ class UserController extends ApiController
     /**
      * Activation does not need any hash or checksum cuz of UUID
      *
-     * @param User $user
-     * @param EntityManagerInterface $em
-     * @return JsonResponse
-     *
-     * @Route("/activate/{id}", name="get_one", methods={"PATCH"})
+     * @Route("/activate/{id}", name="activate", methods={"PATCH"})
      * @ParamConverter("user", converter="doctrine.orm", class="App\Entity\User")
      */
-    public function activate(User $user, EntityManagerInterface $em)
+    public function activate(User $user, EntityManagerInterface $em): JsonResponse
     {
         $user->activate();
         $em->persist($user);
