@@ -89,6 +89,11 @@ class User implements UserInterface
         $this->isActive = true;
     }
 
+    public function deactivate(): void
+    {
+        $this->isActive = true;
+    }
+
     /**
      * @return UuidInterface|string
      */
