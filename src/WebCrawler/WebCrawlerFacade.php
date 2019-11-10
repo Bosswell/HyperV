@@ -36,7 +36,7 @@ class WebCrawlerFacade
             foreach ($selectorCollection as &$selector) {
                 $this->extractSelectors($selector);
             }
-            
+
             return $selectorCollection;
         } catch (Throwable $ex) {
             throw new WebCrawlerException(sprintf(
@@ -67,12 +67,12 @@ class WebCrawlerFacade
                 );
 
                 return $selector;
-            default:
-                throw new WebCrawlerException(sprintf(
-                        'Selector type for [%s] is not supported',
-                        $selector->getType()
-                    )
-                );
         }
+
+        throw new WebCrawlerException(sprintf(
+                'Selector type [%s] is not supported',
+                $selector->getType()
+            )
+        );
     }
 }
