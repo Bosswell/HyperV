@@ -5,9 +5,6 @@ namespace App\Controller\Api;
 use App\Entity\User;
 use App\Base\Controller\ApiController;;
 use App\Exception\ValidationException;
-use App\WebCrawler\Selector;
-use App\WebCrawler\SelectorCollection;
-use App\WebCrawler\WebCrawlerFacade;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -106,25 +103,6 @@ class UserController extends ApiController
         $user->deactivate();
         $em->persist($user);
         $em->flush();
-
-        return new JsonResponse([
-            'message' => self::DEACTIVATE_MESSAGE
-        ],
-            Response::HTTP_OK
-        );
-    }
-
-    /**
-     * @Route("/test", name="test", methods={"GET"})
-     */
-    public function testCrawler()
-    {
-        $collection = new SelectorCollection();
-        $selector = new Selector('Hello', '.header__nav > ul:nth-child(1) > li:nth-child(3) > a:nth-child(1)', Selector::CSS_TYPE);
-        $collection->add($selector);
-
-        (new WebCrawlerFacade())->extractSelectorsFromWebPage($collection, 'https://symfony.com/');
-
 
         return new JsonResponse([
             'message' => self::DEACTIVATE_MESSAGE
