@@ -39,8 +39,7 @@ class UserController extends ApiController
         UserPasswordEncoderInterface $encoder,
         EntityManagerInterface $em,
         EventDispatcherInterface $eventDispatcher
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $this->dtoValidator->validate($userRegister);
 
         $user = $this->mapper->mapToObject($userRegister, new User());
