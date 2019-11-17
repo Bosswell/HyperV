@@ -29,7 +29,7 @@ class CrawlerController extends ApiController
 
         $crawlerFacade = new WebCrawlerFacade();
         $dto = new CrawlerGetLinks();
-        $dto->setDomainUrl('https://greencell.global/');
+        $dto->setDomainUrl('https://greencell.global');
         $crawlerFacade->getAllWebsiteLinks($dto);
 
         return new JsonResponse();

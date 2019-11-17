@@ -9,16 +9,12 @@ use Throwable;
 
 class WebCrawlerFacade
 {
-    /** @var Crawler */
-    private $crawler;
-
     /** @var HttpClient */
     private $httpClient;
 
     public function __construct()
     {
         $this->httpClient = HttpClient::create();
-        $this->crawler = new Crawler(null, 'https://greencell.global/');
     }
 
     /**
@@ -30,12 +26,10 @@ class WebCrawlerFacade
     public function extractSelectorsFromWebPage(SelectorCollection $selectorCollection, string $pageUrl): SelectorCollection
     {
         try {
-            $this->crawler->add(
-                $this->httpClient->request('GET', $pageUrl)->getContent()
-            );
+            $crawler = new Crawler($this->httpClient->request('GET', $pageUrl)->getContent());
 
             foreach ($selectorCollection as &$selector) {
-                $this->extractSelectors($selector);
+                $this->extractSelectors($selector, $crawler);
             }
 
             return $selectorCollection;
@@ -45,8 +39,6 @@ class WebCrawlerFacade
                     $ex->getMessage()
                 )
             );
-        } finally {
-            $this->crawler->clear();
         }
     }
 
@@ -56,62 +48,67 @@ class WebCrawlerFacade
      */
     public function getAllWebsiteLinks(CrawlerGetLinks $crawlerGetLinks)
     {
-        $linksList = [
+        $mainUrl = new UrlPath($crawlerGetLinks->getDomainUrl());
+        $urlsList = [
             [
-                'name' => $crawlerGetLinks->getDomainUrl(),
+                'url' => $mainUrl,
                 'beenCrawled' => false
             ]
         ];
 
-        $this->getPageLinks($linksList);
+        $crawler = new Crawler(null, $crawlerGetLinks->getDomainUrl());
+
+        $this->getPageLinks($urlsList, $crawler, $mainUrl->getDomain());
+        dump($urlsList);
         die();
     }
 
     /**
      * @return bool|void
      * @throws WebCrawlerException
-     * @param array $linksList
+     * @param array $urlsList
+     * @param Crawler $crawler
+     * @param string $domain
      */
-    private function getPageLinks(array &$linksList)
+    private function getPageLinks(array &$urlsList, Crawler $crawler, string $domain)
     {
         try {
-            $key = array_search(false, array_column($linksList, 'beenCrawled'));
+            $key = array_search(false, array_column($urlsList, 'beenCrawled'));
 
+            // If there is no other links to process
             if (false === $key) {
                 return true;
             }
 
             try {
-                $document = $this->httpClient->request('GET', $linksList[$key]['name'])->getContent(false);
+                /** @var UrlPath $urlPath */
+                $urlPath = $urlsList[$key]['url'];
+                $document = $this->httpClient->request('GET', $urlPath->getUrl())->getContent(false);
             } catch (Throwable $exception) {
                 $document = '';
             }
-            $this->crawler->add($document);
 
-            foreach ($this->crawler->filter('a')->links() as $link) {
-                $url = $link->getNode()->getAttribute('href');
+            $crawler->add($document);
+            $links = $crawler->filter('a')->links();
 
+            foreach ($links as $link) {
+                $url = new UrlPath($link->getUri());
 
-                // TODO Improve that shit beyond
-                if (false !== strpos($url, 'https://gr')) {
+                if ($url->getDomain() !== $domain && $url->isRelative() === false || $url->isValid() === false) {
                     continue;
                 }
 
-                if (false === filter_var($link->getUri(), FILTER_VALIDATE_URL)) {
-                    continue;
-                }
-
-                if (false === in_array($link->getUri(), array_column($linksList, 'name'))) {
-                    array_push($linksList, [
-                        'name' => $link->getUri(),
+                if (false === in_array($link->getUri(), array_column($urlsList, 'url'))) {
+                    array_push($urlsList, [
+                        'url' => $url,
                         'beenCrawled' => false
                     ]);
                 }
             }
-            dump($linksList);
-            $linksList[$key]['beenCrawled'] = true;
-            $this->crawler->clear();
-            $this->getPageLinks($linksList);
+
+            $urlsList[$key]['beenCrawled'] = true;
+            $crawler->clear();
+            $this->getPageLinks($urlsList, $crawler, $domain);
 
         } catch (Throwable $ex) {
             throw new WebCrawlerException(sprintf(
@@ -126,19 +123,20 @@ class WebCrawlerFacade
      * @return Selector
      * @throws WebCrawlerException
      * @param Selector $selector
+     * @param Crawler $crawler
      */
-    private function extractSelectors(Selector &$selector): Selector
+    private function extractSelectors(Selector &$selector, Crawler $crawler): Selector
     {
         switch ($selector->getType()) {
             case Selector::CSS_TYPE:
                 $selector->setValue(
-                    $this->crawler->filter($selector->getPath())->text()
+                    $crawler->filter($selector->getPath())->text()
                 );
 
                 return $selector;
             case Selector::XPATH_TYPE:
                 $selector->setValue(
-                    $this->crawler->filterXPath($selector->getPath())
+                    $crawler->filterXPath($selector->getPath())
                 );
 
                 return $selector;
