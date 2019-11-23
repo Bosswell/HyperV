@@ -5,7 +5,7 @@ namespace App\Controller\Api;
 use App\Base\Controller\ApiController;
 use App\Dto\Crawler\CrawlerGetLinks;
 use App\Exception\ValidationException;
-use App\WebCrawler\WebCrawlerFacade;
+use App\Service\WebCrawler\WebCrawler;
 use AutoMapperPlus\Exception\UnregisteredMappingException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -21,7 +21,7 @@ class CrawlerController extends ApiController
      *
      * @Route("/get/links", name="get_links")
      */
-    public function getLinks(/*CrawlerGetLinks $crawlerGetLinks,*/ WebCrawlerFacade $crawlerFacade): JsonResponse
+    public function getLinks(/*CrawlerGetLinks $crawlerGetLinks,*/): JsonResponse
     {
 //        $this->dtoValidator->validate($crawlerGetLinks);
 //
@@ -29,7 +29,7 @@ class CrawlerController extends ApiController
 
         // TODO dorobić ignorowanie podstron
         // Przy walutach i językach bardzo pomocne
-        $crawlerFacade = new WebCrawlerFacade();
+        $crawlerFacade = new WebCrawler();
         $dto = new CrawlerGetLinks();
         $dto->setDomainUrl('https://12factor.net/');
         $crawlerFacade->getAllWebsiteLinks($dto);

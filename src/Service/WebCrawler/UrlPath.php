@@ -1,10 +1,9 @@
 <?php
 
-
-namespace App\WebCrawler;
-
+namespace App\Service\WebCrawler;
 
 use InvalidArgumentException;
+
 
 class UrlPath
 {

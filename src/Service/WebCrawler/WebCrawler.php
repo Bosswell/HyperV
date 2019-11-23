@@ -1,13 +1,13 @@
 <?php
 
-namespace App\WebCrawler;
+namespace App\Service\WebCrawler;
 
 use App\Dto\Crawler\CrawlerGetLinks;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpClient\HttpClient;
 use Throwable;
 
-class WebCrawlerFacade
+class WebCrawler
 {
     /** @var HttpClient */
     private $httpClient;
