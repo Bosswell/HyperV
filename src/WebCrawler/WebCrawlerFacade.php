@@ -57,9 +57,22 @@ class WebCrawlerFacade
         ];
 
         $crawler = new Crawler(null, $crawlerGetLinks->getDomainUrl());
+        $excludedPlaces = ['th', 'fr'];
 
-        $this->getPageLinks($urlsList, $crawler, $mainUrl->getDomain());
+        $filterCallback = function ($url) use ($excludedPlaces) {
+            foreach ($excludedPlaces as $excludedPlace) {
+                if (preg_match('/' . $excludedPlace . '/', $url)) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+        $time_start = microtime(true);
+        $this->getPageLinks($urlsList, $crawler, $mainUrl->getDomain(), $filterCallback);
+        dump((microtime(true) - $time_start));
         dump($urlsList);
+        dump(count($urlsList));
         die();
     }
 
@@ -69,11 +82,13 @@ class WebCrawlerFacade
      * @param array $urlsList
      * @param Crawler $crawler
      * @param string $domain
+     * @param callable $filterCallback
+     * @param int|null $key -> don't set it by default. Parameter is used by next internal calls of function
      */
-    private function getPageLinks(array &$urlsList, Crawler $crawler, string $domain)
+    private function getPageLinks(array &$urlsList, Crawler $crawler, string $domain, callable $filterCallback, $key = null)
     {
         try {
-            $key = array_search(false, array_column($urlsList, 'beenCrawled'));
+            $key = $key ?? array_search(false, array_column($urlsList, 'beenCrawled'));
 
             // If there is no other links to process
             if (false === $key) {
@@ -94,7 +109,12 @@ class WebCrawlerFacade
             foreach ($links as $link) {
                 $url = new UrlPath($link->getUri());
 
-                if ($url->getDomain() !== $domain && $url->isRelative() === false || $url->isValid() === false) {
+                if (
+                    $url->getDomain() !== $domain
+                    && $url->isRelative() === false
+                    || $url->isValid() === false
+                    || $filterCallback($url->getUrl()) === false
+                ) {
                     continue;
                 }
 
@@ -108,7 +128,13 @@ class WebCrawlerFacade
 
             $urlsList[$key]['beenCrawled'] = true;
             $crawler->clear();
-            $this->getPageLinks($urlsList, $crawler, $domain);
+            $this->getPageLinks(
+                $urlsList,
+                $crawler,
+                $domain,
+                $filterCallback,
+                array_key_exists(++$key, $urlsList) ? $key : null
+            );
 
         } catch (Throwable $ex) {
             throw new WebCrawlerException(sprintf(

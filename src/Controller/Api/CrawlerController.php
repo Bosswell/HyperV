@@ -27,9 +27,11 @@ class CrawlerController extends ApiController
 //
 //        $user = $this->mapper->mapToObject($userRegister, new User());
 
+        // TODO dorobić ignorowanie podstron
+        // Przy walutach i językach bardzo pomocne
         $crawlerFacade = new WebCrawlerFacade();
         $dto = new CrawlerGetLinks();
-        $dto->setDomainUrl('https://greencell.global');
+        $dto->setDomainUrl('https://12factor.net/');
         $crawlerFacade->getAllWebsiteLinks($dto);
 
         return new JsonResponse();
