@@ -12,7 +12,7 @@ use App\Validator\Constraints\UniqueDto;
  *     message = "You can't use this email"
  * )
  */
-class UserRegister
+final class UserRegister
 {
     /**
      * @var string
