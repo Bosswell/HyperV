@@ -24,7 +24,7 @@ class CrawlerController extends ApiController
      * @ParamConverter("crawlerGetLinks", converter="dto_converter", class="App\Dto\Crawler\CrawlerGetLinks")
      * @Route("/get/links", name="get_links")
      */
-    public function getLinks(CrawlerGetLinks $crawlerGetLinks, LinkExtractorFacade $linkExtractorFacade): JsonResponse
+    public function saveLinks(CrawlerGetLinks $crawlerGetLinks, LinkExtractorFacade $linkExtractorFacade): JsonResponse
     {
         $this->dtoValidator->validate($crawlerGetLinks);
         $links = $linkExtractorFacade->getLinks($crawlerGetLinks);

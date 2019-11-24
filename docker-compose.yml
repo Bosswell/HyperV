@@ -5,6 +5,7 @@ services:
     container_name: testerv.app
     environment:
         - APACHE_DOCUMENT_ROOT=/var/www/html/public
+        - REDIS_URL=redis://cache
     ports: 
         - 80:80
     build: 
@@ -12,6 +13,8 @@ services:
     volumes:
         - .:/var/www/html
         - ./docker/config/vhost.conf:/etc/apache2/sites-available/000-default.conf
+    links:
+      - redis
 
   mariadb:
     image: mariadb
@@ -32,4 +35,10 @@ services:
       - 8080:80
     volumes:
       - /sessions
+
+  redis:
+    image: redis
+    container_name: cache
+    ports:
+      - 6379:6379
 

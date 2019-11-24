@@ -9,6 +9,16 @@ class CrawlerGetLinks
     /**
      * @var string
      *
+     * @Assert\Type("string")
+     * @Assert\NotNull(
+     *     message = "You need to specify crawler name"
+     * )
+     */
+    private $name;
+
+    /**
+     * @var string
+     *
      * @Assert\NotNull(
      *     message = "You need to specify your domain"
      * )
@@ -51,5 +61,13 @@ class CrawlerGetLinks
     public function getExcludedPaths(): array
     {
         return $this->excludedPaths;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
     }
 }

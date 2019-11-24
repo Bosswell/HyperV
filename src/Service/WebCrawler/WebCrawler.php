@@ -60,7 +60,7 @@ class WebCrawler
 
         $this->getPageLinks($urlsList, $crawler, $urlPath->getDomain(), $filterCallback);
 
-        return $urlsList;
+        return array_column($urlsList, 'url');
     }
 
     /**
