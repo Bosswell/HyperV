@@ -5,10 +5,12 @@ namespace App\Controller\Api;
 use App\Base\Controller\ApiController;
 use App\Dto\Crawler\CrawlerGetLinks;
 use App\Exception\ValidationException;
-use App\Service\WebCrawler\WebCrawler;
-use AutoMapperPlus\Exception\UnregisteredMappingException;
+use App\PageExtractor\LinkExtractorFacade;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\WebCrawler\WebCrawlerException;
 
 /**
  * @Route("/api/crawler", name="api_crawler_")
@@ -17,23 +19,19 @@ class CrawlerController extends ApiController
 {
     /**
      * @throws ValidationException
-     * @throws UnregisteredMappingException
+     * @throws WebCrawlerException
      *
+     * @ParamConverter("crawlerGetLinks", converter="dto_converter", class="App\Dto\Crawler\CrawlerGetLinks")
      * @Route("/get/links", name="get_links")
      */
-    public function getLinks(/*CrawlerGetLinks $crawlerGetLinks,*/): JsonResponse
+    public function getLinks(CrawlerGetLinks $crawlerGetLinks, LinkExtractorFacade $linkExtractorFacade): JsonResponse
     {
-//        $this->dtoValidator->validate($crawlerGetLinks);
-//
-//        $user = $this->mapper->mapToObject($userRegister, new User());
+        $this->dtoValidator->validate($crawlerGetLinks);
+        $links = $linkExtractorFacade->getLinks($crawlerGetLinks);
 
-        // TODO dorobić ignorowanie podstron
-        // Przy walutach i językach bardzo pomocne
-        $crawlerFacade = new WebCrawler();
-        $dto = new CrawlerGetLinks();
-        $dto->setDomainUrl('https://12factor.net/');
-        $crawlerFacade->getAllWebsiteLinks($dto);
-
-        return new JsonResponse();
+        return new JsonResponse([
+            count($links),
+            Response::HTTP_OK
+        ]);
     }
 }

@@ -43,37 +43,24 @@ class WebCrawler
     }
 
     /**
+     * @return array
      * @throws WebCrawlerException
-     * @param CrawlerGetLinks $crawlerGetLinks
+     * @param callable|null $filterCallback
      */
-    public function getAllWebsiteLinks(CrawlerGetLinks $crawlerGetLinks)
+    public function getAllWebsiteLinks(UrlPath $urlPath, string $domainUrl, ?callable $filterCallback = null): array
     {
-        $mainUrl = new UrlPath($crawlerGetLinks->getDomainUrl());
         $urlsList = [
             [
-                'url' => $mainUrl,
+                'url' => $urlPath,
                 'beenCrawled' => false
             ]
         ];
 
-        $crawler = new Crawler(null, $crawlerGetLinks->getDomainUrl());
-        $excludedPlaces = ['th', 'fr'];
+        $crawler = new Crawler(null, $domainUrl);
 
-        $filterCallback = function ($url) use ($excludedPlaces) {
-            foreach ($excludedPlaces as $excludedPlace) {
-                if (preg_match('/' . $excludedPlace . '/', $url)) {
-                    return false;
-                }
-            }
+        $this->getPageLinks($urlsList, $crawler, $urlPath->getDomain(), $filterCallback);
 
-            return true;
-        };
-        $time_start = microtime(true);
-        $this->getPageLinks($urlsList, $crawler, $mainUrl->getDomain(), $filterCallback);
-        dump((microtime(true) - $time_start));
-        dump($urlsList);
-        dump(count($urlsList));
-        die();
+        return $urlsList;
     }
 
     /**
@@ -82,10 +69,10 @@ class WebCrawler
      * @param array $urlsList
      * @param Crawler $crawler
      * @param string $domain
-     * @param callable $filterCallback
+     * @param callable|null $filterCallback -> callback which take $url as argument and return true, if url need to be excluded
      * @param int|null $key -> don't set it by default. Parameter is used by next internal calls of function
      */
-    private function getPageLinks(array &$urlsList, Crawler $crawler, string $domain, callable $filterCallback, $key = null)
+    private function getPageLinks(array &$urlsList, Crawler $crawler, string $domain, ?callable $filterCallback = null, $key = null)
     {
         try {
             $key = $key ?? array_search(false, array_column($urlsList, 'beenCrawled'));
@@ -113,7 +100,7 @@ class WebCrawler
                     $url->getDomain() !== $domain
                     && $url->isRelative() === false
                     || $url->isValid() === false
-                    || $filterCallback($url->getUrl()) === false
+                    || $filterCallback($url->getUrl()) ?? false
                 ) {
                     continue;
                 }

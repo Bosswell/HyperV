@@ -25,6 +25,11 @@ class CrawlerGetLinks
     private $pattern;
 
     /**
+     * @var string[]
+     */
+    private $excludedPaths;
+
+    /**
      * @return string
      */
     public function getDomainUrl(): string
@@ -41,10 +46,10 @@ class CrawlerGetLinks
     }
 
     /**
-     * @param string $domainUrl
+     * @return string[]
      */
-    public function setDomainUrl(string $domainUrl): void
+    public function getExcludedPaths(): array
     {
-        $this->domainUrl = $domainUrl;
+        return $this->excludedPaths;
     }
 }
