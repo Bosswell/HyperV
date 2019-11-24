@@ -48,10 +48,11 @@ class ApiExceptionController extends ExceptionController
 
     public function getError(FlattenException $exception): array
     {
-        $error = [];
-
-        $error['code'] = $this->errorMap[$exception->getClass()]['code'] ?? 'UNKNOWN_ERROR';
-        $error['message'] = $this->errorMap[$exception->getClass()]['message'] ?? 'Unknown error';
+        $error = [
+            'code' => $this->errorMap[$exception->getClass()]['code'] ?? 'UNDEFINED_ERROR',
+            'message' => $this->errorMap[$exception->getClass()]['message'] ?? 'Undefined error',
+            'error' => $exception->getMessage()
+        ];
 
         if ($exception->getClass() === ValidationException::class) {
             $error['errors'] = unserialize($exception->getMessage());
