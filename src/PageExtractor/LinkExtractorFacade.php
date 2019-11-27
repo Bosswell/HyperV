@@ -4,8 +4,7 @@ namespace App\PageExtractor;
 
 use App\Dto\Crawler\CrawlerGetLinks;
 use App\Service\WebCrawler\UrlPath;
-use App\Service\WebCrawler\WebCrawler;
-use App\Service\WebCrawler\WebCrawlerException;
+use App\Service\WebCrawler\WebCrawler;;
 use Psr\Cache\InvalidArgumentException;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
@@ -28,14 +27,14 @@ final class LinkExtractorFacade
     }
 
     /**
-     * @return array
+     * @return string[]
      * @throws ExtractorException
      * @param CrawlerGetLinks $crawlerGetLinks
      */
     public function getLinks(CrawlerGetLinks $crawlerGetLinks): array
     {
         try {
-            $cachedUrlsList = $this->cache->get($crawlerGetLinks->getName(), function (ItemInterface $item) use ($crawlerGetLinks) {
+            $cachedUrlsList = $this->cache->get($crawlerGetLinks->getPatternName(), function (ItemInterface $item) use ($crawlerGetLinks) {
                 $item->expiresAfter(3600);
 
                 return $this->extractLinks($crawlerGetLinks);
@@ -51,8 +50,8 @@ final class LinkExtractorFacade
     }
 
     /**
-     * @return UrlPath[]
-     * @throws WebCrawlerException
+     * @return string[]
+     * @throws InvalidArgumentException
      * @param CrawlerGetLinks $crawlerGetLinks
      */
     private function extractLinks(CrawlerGetLinks $crawlerGetLinks): array
@@ -67,15 +66,17 @@ final class LinkExtractorFacade
             return false;
         };
 
-        $urlsList = $this->webCrawler->getAllWebsiteLinks(
-            new UrlPath($crawlerGetLinks->getDomainUrl()),
-            $crawlerGetLinks->getDomainUrl(),
-            $filterCallback
-        );
+        $urlsList = $this->cache->get($crawlerGetLinks->getName(), function () use ($crawlerGetLinks, $filterCallback) {
+            return $this->webCrawler->getAllWebsiteLinks(
+                new UrlPath($crawlerGetLinks->getDomainUrl()),
+                $crawlerGetLinks->getDomainUrl(),
+                $filterCallback
+            );
+        });
 
         if ($pattern = $crawlerGetLinks->getPattern()) {
-            $urlsList = array_filter($urlsList, function (UrlPath $url) use ($pattern) {
-                return (bool)preg_match($pattern, $url->getUrl());
+            $urlsList = array_filter($urlsList, function (string $url) use ($pattern) {
+                return (bool)preg_match($pattern, $url);
             });
         }
 

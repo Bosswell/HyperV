@@ -7,7 +7,6 @@ use App\Dto\Crawler\CrawlerGetLinks;
 use App\Exception\ValidationException;
 use App\PageExtractor\ExtractorException;
 use App\PageExtractor\LinkExtractorFacade;
-use App\Service\WebCrawler\UrlPath;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\ParamConverter;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -31,9 +30,7 @@ class CrawlerController extends ApiController
         $links = $linkExtractorFacade->getLinks($crawlerGetLinks);
 
         return new JsonResponse([
-            array_map(function (UrlPath $urlPath) {
-                return $urlPath->getUrl();
-            }, $links),
+            $links,
             Response::HTTP_OK
         ]);
     }

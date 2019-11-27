@@ -27,12 +27,18 @@ final class CrawlerGetLinks
 
     /**
      * @var string
+     */
+    private $pattern;
+
+    /**
+     * @var string
      *
+     * @Assert\Type("string")
      * @Assert\NotNull(
      *     message = "You need to specify your pattern"
      * )
      */
-    private $pattern;
+    private $patternName;
 
     /**
      * @var string[]
@@ -50,7 +56,7 @@ final class CrawlerGetLinks
     /**
      * @return string
      */
-    public function getPattern(): string
+    public function getPattern(): ?string
     {
         return $this->pattern;
     }
@@ -69,5 +75,13 @@ final class CrawlerGetLinks
     public function getName(): string
     {
         return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPatternName(): string
+    {
+        return $this->patternName;
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Service\WebCrawler;
 
-use App\Dto\Crawler\CrawlerGetLinks;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpClient\HttpClient;
 use Throwable;
@@ -43,7 +42,7 @@ class WebCrawler
     }
 
     /**
-     * @return array
+     * @return UrlPath[]
      * @throws WebCrawlerException
      * @param callable|null $filterCallback
      */
@@ -60,7 +59,9 @@ class WebCrawler
 
         $this->getPageLinks($urlsList, $crawler, $urlPath->getDomain(), $filterCallback);
 
-        return array_column($urlsList, 'url');
+        return array_map(function ($urlElement) {
+            return $urlElement['url']->getUrl();
+        }, $urlsList);
     }
 
     /**
