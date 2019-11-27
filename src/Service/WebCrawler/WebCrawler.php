@@ -4,6 +4,7 @@ namespace App\Service\WebCrawler;
 
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 
 class WebCrawler
@@ -11,9 +12,9 @@ class WebCrawler
     /** @var HttpClient */
     private $httpClient;
 
-    public function __construct()
+    public function __construct(HttpClientInterface $httpClient)
     {
-        $this->httpClient = HttpClient::create();
+        $this->httpClient = $httpClient;
     }
 
     /**
@@ -50,18 +51,15 @@ class WebCrawler
     {
         $urlsList = [
             [
-                'url' => $urlPath,
+                'url' => $urlPath->getUrl(),
                 'beenCrawled' => false
             ]
         ];
 
         $crawler = new Crawler(null, $domainUrl);
-
         $this->getPageLinks($urlsList, $crawler, $urlPath->getDomain(), $filterCallback);
 
-        return array_map(function ($urlElement) {
-            return $urlElement['url']->getUrl();
-        }, $urlsList);
+        return array_column($urlsList, 'url');
     }
 
     /**
@@ -83,9 +81,10 @@ class WebCrawler
                 return true;
             }
 
+            /** @var UrlPath $urlPath */
+            $urlPath = new UrlPath($urlsList[$key]['url']);
+
             try {
-                /** @var UrlPath $urlPath */
-                $urlPath = $urlsList[$key]['url'];
                 $document = $this->httpClient->request('GET', $urlPath->getUrl())->getContent(false);
             } catch (Throwable $exception) {
                 $document = '';
@@ -106,15 +105,16 @@ class WebCrawler
                     continue;
                 }
 
-                if (false === in_array($link->getUri(), array_column($urlsList, 'url'))) {
+                if (false === in_array($url->getUrl(), array_column($urlsList, 'url'))) {
                     array_push($urlsList, [
-                        'url' => $url,
+                        'url' => $url->getUrl(),
                         'beenCrawled' => false
                     ]);
                 }
             }
 
             $urlsList[$key]['beenCrawled'] = true;
+
             $crawler->clear();
             $this->getPageLinks(
                 $urlsList,

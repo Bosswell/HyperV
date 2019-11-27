@@ -34,8 +34,8 @@ final class LinkExtractorFacade
     public function getLinks(CrawlerGetLinks $crawlerGetLinks): array
     {
         try {
-            $cachedUrlsList = $this->cache->get($crawlerGetLinks->getPatternName(), function (ItemInterface $item) use ($crawlerGetLinks) {
-                $item->expiresAfter(3600);
+            $cachedUrlsList = $this->cache->get($crawlerGetLinks->getEncodedPattern(), function (ItemInterface $item) use ($crawlerGetLinks) {
+                $item->expiresAfter(1000000);
 
                 return $this->extractLinks($crawlerGetLinks);
             });
@@ -58,7 +58,7 @@ final class LinkExtractorFacade
     {
         $filterCallback = function ($url) use ($crawlerGetLinks) {
             foreach ($crawlerGetLinks->getExcludedPaths() as $excludedPlace) {
-                if (preg_match(preg_quote($excludedPlace), $url)) {
+                if (preg_match(sprintf('/%s/', preg_quote($excludedPlace, '/')), $url)) {
                     return true;
                 }
             }

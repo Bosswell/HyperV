@@ -31,19 +31,9 @@ final class CrawlerGetLinks
     private $pattern;
 
     /**
-     * @var string
-     *
-     * @Assert\Type("string")
-     * @Assert\NotNull(
-     *     message = "You need to specify your pattern"
-     * )
-     */
-    private $patternName;
-
-    /**
      * @var string[]
      */
-    private $excludedPaths;
+    private $excludedPaths = [];
 
     /**
      * @return string
@@ -80,8 +70,8 @@ final class CrawlerGetLinks
     /**
      * @return string
      */
-    public function getPatternName(): string
+    public function getEncodedPattern(): string
     {
-        return $this->patternName;
+        return base64_encode($this->name . $this->pattern ?? '');
     }
 }

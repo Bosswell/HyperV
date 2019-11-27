@@ -21,7 +21,7 @@ class UrlPath
      */
     public function __construct(string $url)
     {
-        $this->url = $url;
+        $this->url = strtok($url, '#');
 
         $this->parseUrl();
     }
@@ -52,7 +52,9 @@ class UrlPath
      */
     public function isValid(): bool
     {
-        return filter_var($this->url, FILTER_VALIDATE_URL);
+        return
+            filter_var($this->url, FILTER_VALIDATE_URL)
+            && (bool)!preg_match('/\.jpg|\.png|\.gif|\.jpeg|\.pdf/', $this->url);
     }
 
     /**

@@ -26,6 +26,7 @@ class CrawlerController extends ApiController
      */
     public function getLinks(CrawlerGetLinks $crawlerGetLinks, LinkExtractorFacade $linkExtractorFacade): JsonResponse
     {
+        ini_set('memory_limit', '1048M');
         $this->dtoValidator->validate($crawlerGetLinks);
         $links = $linkExtractorFacade->getLinks($crawlerGetLinks);
 
