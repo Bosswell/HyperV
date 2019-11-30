@@ -1,4 +1,5 @@
 monolog:
+    channels: [linkCrawler]
     handlers:
         main:
             type: stream
@@ -17,3 +18,8 @@ monolog:
             type: console
             process_psr_3_messages: false
             channels: ["!event", "!doctrine", "!console"]
+
+        crawler:
+            type: stream
+            path: "%kernel.logs_dir%/linkCrawler.log"
+            channels: [linkCrawler]
