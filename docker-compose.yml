@@ -13,6 +13,7 @@ services:
     volumes:
         - .:/var/www/html
         - ./docker/config/vhost.conf:/etc/apache2/sites-available/000-default.conf
+        - ./docker/config/my.cnf:/etc/my.cnf
     links:
       - redis
 
