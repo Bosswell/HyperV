@@ -26,7 +26,10 @@ class UrlPath
         $this->parseUrl();
     }
 
-    public function getDomain()
+    /**
+     * @return string
+     */
+    public function getDomain(): string
     {
         return $this->domain;
     }
@@ -54,7 +57,7 @@ class UrlPath
     {
         return
             filter_var($this->url, FILTER_VALIDATE_URL)
-            && (bool)!preg_match('/\.jpg|\.png|\.gif|\.jpeg|\.pdf/', $this->url);
+            && (bool)!preg_match('/\.(jpg|png|gif|jpeg|pdf)/', $this->url);
     }
 
     /**
@@ -72,6 +75,10 @@ class UrlPath
      */
     private function parseUrl(): void
     {
+        if (!$this->isValid()) {
+            return;
+        }
+
         // Remove everything after question mark
         $url = strtok($this->url, '?');
 
@@ -85,7 +92,7 @@ class UrlPath
             }
 
             if (!preg_match('/\/\/.*?\//', $url, $matches)) {
-                throw new InvalidArgumentException(sprintf('Given URL is not valid [%s]', $url));
+                throw new InvalidArgumentException(sprintf('Given URL is not valid [%s]', $this->url));
             }
 
             $this->domain = trim($matches[0], '/');

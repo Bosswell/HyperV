@@ -9,18 +9,9 @@ final class CrawlerGetLinks
     /**
      * @var string
      *
-     * @Assert\Type("string")
-     * @Assert\NotNull(
-     *     message = "You need to specify crawler name"
-     * )
-     */
-    private $name;
-
-    /**
-     * @var string
-     *
-     * @Assert\NotNull(
-     *     message = "You need to specify your domain"
+     * @Assert\Url(
+     *    message = "The domainUrl '{{ value }}' is not a valid url",
+     *    protocols = {"http", "https"}
      * )
      */
     private $domainUrl;
@@ -31,9 +22,31 @@ final class CrawlerGetLinks
     private $pattern;
 
     /**
+     * @Assert\Type(
+     *     type="integer",
+     *     message="The value {{ value }} is not a valid {{ type }}."
+     * )
+     * @Assert\GreaterThanOrEqual(0)
+     *
+     * @var int -> value 0 mean that there is no limit
+     */
+    private $limit = 0;
+
+
+    /**
      * @var string[]
      */
     private $excludedPaths = [];
+
+    public function __construct(?array $data = null)
+    {
+        if (!is_null($data)) {
+            $this->domainUrl = $data['domainUrl'] ?? null;
+            $this->pattern = $data['pattern'] ?? '';
+            $this->excludedPaths = $data['excludedPaths'] ?? [];
+            $this->limit = $data['limit'] ?? 0;
+        }
+    }
 
     /**
      * @return string
@@ -60,11 +73,11 @@ final class CrawlerGetLinks
     }
 
     /**
-     * @return string
+     * @return int
      */
-    public function getName(): string
+    public function getLimit(): int
     {
-        return $this->name;
+        return $this->limit;
     }
 
     /**
@@ -72,6 +85,14 @@ final class CrawlerGetLinks
      */
     public function getEncodedPattern(): string
     {
-        return base64_encode($this->name . $this->pattern ?? '');
+        return base64_encode('pattern_' . $this->domainUrl . $this->pattern ?? '');
+    }
+
+    /**
+     * @return string
+     */
+    public function getEncodedDomain(): string
+    {
+        return base64_encode($this->domainUrl);
     }
 }

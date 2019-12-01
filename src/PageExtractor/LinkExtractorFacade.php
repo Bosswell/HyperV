@@ -3,9 +3,15 @@
 namespace App\PageExtractor;
 
 use App\Dto\Crawler\CrawlerGetLinks;
+use App\Entity\CrawledDomainHistory;
+use App\Exception\ValidationException;
+use App\Service\DtoValidator;
 use App\Service\WebCrawler\UrlPath;
 use App\Service\WebCrawler\WebCrawler;;
+
+use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Throwable;
@@ -19,28 +25,39 @@ final class LinkExtractorFacade
     /** @var CacheInterface */
     private $cache;
 
+    /** @var DtoValidator */
+    private $dtoValidator;
 
-    public function __construct(WebCrawler $webCrawler, CacheInterface $cache)
+    /** @var EntityManagerInterface */
+    private $entityManager;
+
+    public function __construct(WebCrawler $webCrawler, CacheInterface $cache, DtoValidator $dtoValidator, EntityManagerInterface $entityManager)
     {
         $this->webCrawler = $webCrawler;
         $this->cache = $cache;
+        $this->dtoValidator = $dtoValidator;
+        $this->entityManager = $entityManager;
     }
 
     /**
-     * @return string[]
+     * @return array
      * @throws ExtractorException
-     * @param CrawlerGetLinks $crawlerGetLinks
+     * @throws ValidationException
      */
-    public function getLinks(CrawlerGetLinks $crawlerGetLinks): array
+    public function getLinks(CrawlerGetLinks $crawlerGetLinks, bool $continueCrawling = false): array
     {
+        $this->dtoValidator->validate($crawlerGetLinks);
+
         try {
-            $cachedUrlsList = $this->cache->get($crawlerGetLinks->getEncodedPattern(), function (ItemInterface $item) use ($crawlerGetLinks) {
+            if ($continueCrawling) {
+                $this->cache->delete($crawlerGetLinks->getEncodedPattern());
+            }
+
+            return $this->cache->get($crawlerGetLinks->getEncodedPattern(), function (ItemInterface $item) use ($crawlerGetLinks, $continueCrawling) {
                 $item->expiresAfter(1000000);
 
-                return $this->extractLinks($crawlerGetLinks);
+                return $this->extractLinks($crawlerGetLinks, $continueCrawling);
             });
-
-            return $cachedUrlsList;
         } catch (InvalidArgumentException | Throwable $exception) {
             throw new ExtractorException(sprintf(
                 'Error has occurred while extracting page links: Details [%s]',
@@ -52,9 +69,8 @@ final class LinkExtractorFacade
     /**
      * @return string[]
      * @throws InvalidArgumentException
-     * @param CrawlerGetLinks $crawlerGetLinks
      */
-    private function extractLinks(CrawlerGetLinks $crawlerGetLinks): array
+    private function extractLinks(CrawlerGetLinks $crawlerGetLinks, bool $continueCrawling = false): array
     {
         $filterCallback = function ($url) use ($crawlerGetLinks) {
             foreach ($crawlerGetLinks->getExcludedPaths() as $excludedPlace) {
@@ -66,12 +82,40 @@ final class LinkExtractorFacade
             return false;
         };
 
-        $urlsList = $this->cache->get($crawlerGetLinks->getName(), function () use ($crawlerGetLinks, $filterCallback) {
-            return $this->webCrawler->getAllWebsiteLinks(
-                new UrlPath($crawlerGetLinks->getDomainUrl()),
+        $oldUrlsList = null;
+        if ($continueCrawling) {
+            $oldUrlsList = $this->cache->get($crawlerGetLinks->getEncodedDomain(), function () use ($crawlerGetLinks) {
+                $this->extractLinks($crawlerGetLinks);
+            });
+            $this->cache->delete($crawlerGetLinks->getEncodedDomain());
+        }
+
+        $urlsList = $this->cache->get($crawlerGetLinks->getEncodedDomain(), function (ItemInterface $item) use ($crawlerGetLinks, $filterCallback, $oldUrlsList) {
+            $item->expiresAfter(1000000);
+            $domainUrlPath = new UrlPath($crawlerGetLinks->getDomainUrl());
+
+            $lastCrawledQuantity = null;
+            if (!is_null($oldUrlsList)) {
+                // TODO Get last crawled links quantity
+                $lastCrawledQuantity = null;
+            }
+
+            [$urlsList, $crawledUrls] =  $this->webCrawler->getAllWebsiteLinks(
+                $domainUrlPath,
                 $crawlerGetLinks->getDomainUrl(),
-                $filterCallback
+                $crawlerGetLinks->getLimit(),
+                $filterCallback,
+                $oldUrlsList,
+                $lastCrawledQuantity
             );
+
+            $domainHistory = new CrawledDomainHistory();
+            $domainHistory->setDomainName($domainUrlPath->getDomain());
+            $domainHistory->setCrawledUrls($crawledUrls);
+            $this->entityManager->persist($domainHistory);
+            $this->entityManager->flush();
+
+            return $urlsList;
         });
 
         if ($pattern = $crawlerGetLinks->getPattern()) {
