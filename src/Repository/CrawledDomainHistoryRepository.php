@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\CrawledDomainHistory;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\ORM\NonUniqueResultException;
 
 /**
  * @method CrawledDomainHistory|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,32 +20,21 @@ class CrawledDomainHistoryRepository extends ServiceEntityRepository
         parent::__construct($registry, CrawledDomainHistory::class);
     }
 
-    // /**
-    //  * @return CrawledDomainHistory[] Returns an array of CrawledDomainHistory objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @throws NonUniqueResultException
+     */
+    public function findLatestCrawledLinks(string $domainName): ?int
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
-
-    /*
-    public function findOneBySomeField($value): ?CrawledDomainHistory
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
+        /** @var CrawledDomainHistory $history */
+        $history =  $this->createQueryBuilder('c')
+            ->andWhere('c.domainName = :domainName')
+            ->setParameter('domainName', $domainName)
+            ->orderBy('c.cratedAt', 'DESC')
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult()
         ;
+
+        return $history->getCrawledUrls() ?? null;
     }
-    */
 }

@@ -30,6 +30,8 @@ class WebCrawlerCommand extends Command
             ->addOption('domainUrl', 'd', InputOption::VALUE_REQUIRED, 'Website base domain url ex. http://youtube.com/')
             ->addOption('pattern', 'p',InputOption::VALUE_OPTIONAL, 'RageXp for URLs ex. /d+-.*')
             ->addOption('excludedPaths', 'exPaths',InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'Excluded paths ex. /pl/, /de/, ?search')
+            ->addOption('limit', 'l',InputOption::VALUE_OPTIONAL, 'How many urls')
+            ->addOption('continueCrawling', '-c',InputOption::VALUE_OPTIONAL, 'Continue crawling a site')
         ;
     }
 
@@ -46,6 +48,6 @@ class WebCrawlerCommand extends Command
 
         $output->writeln('Extracting domain urls..');
         $output->writeln('Visit /var/log/linkCrawler.log to see more details');
-        $this->linkExtractorFacade->getLinks($crawlerGetLinks);
+        $this->linkExtractorFacade->getLinks($crawlerGetLinks, $input->getOption('limit'));
     }
 }

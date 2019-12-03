@@ -5,13 +5,12 @@ namespace App\PageExtractor;
 use App\Dto\Crawler\CrawlerGetLinks;
 use App\Entity\CrawledDomainHistory;
 use App\Exception\ValidationException;
+use App\Repository\CrawledDomainHistoryRepository;
 use App\Service\DtoValidator;
 use App\Service\WebCrawler\UrlPath;
 use App\Service\WebCrawler\WebCrawler;;
-
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\InvalidArgumentException;
-use Psr\Log\LoggerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 use Throwable;
@@ -31,8 +30,12 @@ final class LinkExtractorFacade
     /** @var EntityManagerInterface */
     private $entityManager;
 
-    public function __construct(WebCrawler $webCrawler, CacheInterface $cache, DtoValidator $dtoValidator, EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        WebCrawler $webCrawler,
+        CacheInterface $cache,
+        DtoValidator $dtoValidator,
+        EntityManagerInterface $entityManager
+    ) {
         $this->webCrawler = $webCrawler;
         $this->cache = $cache;
         $this->dtoValidator = $dtoValidator;
@@ -40,6 +43,7 @@ final class LinkExtractorFacade
     }
 
     /**
+     * TODO Save used patterns for domain, (and domain) and destroy them if someone continue crawling?
      * @return array
      * @throws ExtractorException
      * @throws ValidationException
@@ -50,6 +54,7 @@ final class LinkExtractorFacade
 
         try {
             if ($continueCrawling) {
+                // TODO look at annotations
                 $this->cache->delete($crawlerGetLinks->getEncodedPattern());
             }
 
@@ -96,8 +101,9 @@ final class LinkExtractorFacade
 
             $lastCrawledQuantity = null;
             if (!is_null($oldUrlsList)) {
-                // TODO Get last crawled links quantity
-                $lastCrawledQuantity = null;
+                /** @var CrawledDomainHistoryRepository $crawledDomainHist */
+                $crawledDomainHist = $this->entityManager->getRepository(CrawledDomainHistory::class);
+                $lastCrawledQuantity = $crawledDomainHist->findLatestCrawledLinks($domainUrlPath->getDomain());
             }
 
             [$urlsList, $crawledUrls] =  $this->webCrawler->getAllWebsiteLinks(
