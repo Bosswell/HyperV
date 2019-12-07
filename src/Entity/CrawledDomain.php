@@ -2,13 +2,15 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints\DateTime;
 
 /**
  * @ORM\Entity(repositoryClass="CrawledDomainHistoryRepository")
  */
-class CrawledDomainHistory
+class CrawledDomain
 {
     /**
      * @ORM\Id()
@@ -32,9 +34,15 @@ class CrawledDomainHistory
      */
     private $createdAt;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\CrawledDomainPattern", mappedBy="crawledDomains")
+     */
+    private $crawledDomainPatterns;
+
     public function __construct()
     {
         $this->createdAt = new DateTime('now');
+        $this->crawledDomainPatterns = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -74,6 +82,34 @@ class CrawledDomainHistory
     public function setCreatedAt(\DateTimeInterface $createdAt): self
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|CrawledDomainPattern[]
+     */
+    public function getCrawledDomainPatterns(): Collection
+    {
+        return $this->crawledDomainPatterns;
+    }
+
+    public function addCrawledDomainPattern(CrawledDomainPattern $crawledDomainPattern): self
+    {
+        if (!$this->crawledDomainPatterns->contains($crawledDomainPattern)) {
+            $this->crawledDomainPatterns[] = $crawledDomainPattern;
+            $crawledDomainPattern->addCrawledDomain($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCrawledDomainPattern(CrawledDomainPattern $crawledDomainPattern): self
+    {
+        if ($this->crawledDomainPatterns->contains($crawledDomainPattern)) {
+            $this->crawledDomainPatterns->removeElement($crawledDomainPattern);
+            $crawledDomainPattern->removeCrawledDomain($this);
+        }
 
         return $this;
     }
