@@ -60,23 +60,43 @@ class WebCrawler
     }
 
     /**
-     * @return array [$extractedLinks, $fileName]
+     * TODO We need to do something if TransportException occur.
+     * TODO Store those links in array and for example if array has more element then 1000,
+     * TODO break loop
+     * TODO If loop has been broken or not, all those links append at the end of the file and decrease crawled links
+     *
+     * @return DomainLinks
      * @param UrlPath $urlPath
      * @param callable|null $filterCallback
+     * @param DomainLinks|null $domainLinks -> if not null, Crawler will continue from last registered checkpoint
+     *
+     * @throws Throwable
      */
-    public function getDomainLinks(UrlPath $urlPath, ?callable $filterCallback = null): array
+    public function getDomainLinks(UrlPath $urlPath, ?callable $filterCallback = null, ?int $limit = null, ?DomainLinks $domainLinks = null): DomainLinks
     {
         $crawler = new Crawler(null, $urlPath->getUrl());
 
+        if (!is_null($domainLinks)) {
+            $extractedLinks = $domainLinks->getExtractedLinks();
+            $crawledLinks = $domainLinks->getCrawledLinks();
+            $fileName = $domainLinks->getFileName();
+        } else {
+            $date = new \DateTime('now');
+
+            $extractedLinks = 0;
+            $crawledLinks = 0;
+            $fileName = sprintf(
+                '%s__%s',
+                $urlPath->getDomain(),
+                $date->format('Y-m-d__H_i_s')
+            );
+        }
+
         $varDir = ($this->parameterBag->get('kernel.project_dir') . '/var/');
-        $fileName = $urlPath->getDomain() . uniqid();
         $pageLinksFile = $varDir . $fileName . '.txt';
 
         $file = new SplFileObject($pageLinksFile, 'a+');
         $file->fwrite($urlPath->getUrl(). "\n");
-
-        $extractedLinks = 0;
-        $crawledLinks = 0;
 
         do {
             foreach ($this->createRequests($file, $crawledLinks) as $httpResponsesChunk) {
@@ -130,13 +150,14 @@ class WebCrawler
                         break 3;
                     }
                 }
+
+                if ($limit <= $crawledLinks) {
+                    break 2;
+                }
             }
         } while ($extractedLinks !== $crawledLinks);
 
-        return [
-            $extractedLinks,
-            $fileName
-        ];
+        return new DomainLinks($extractedLinks, $crawledLinks, $fileName);
     }
 
     /**
