@@ -69,7 +69,7 @@ class WebCrawler
         $crawler = new Crawler(null, $urlPath->getUrl());
 
         $varDir = ($this->parameterBag->get('kernel.project_dir') . '/var/');
-        $fileName = uniqid();
+        $fileName = $urlPath->getDomain() . uniqid();
         $pageLinksFile = $varDir . $fileName . '.txt';
 
         $file = new SplFileObject($pageLinksFile, 'a+');
