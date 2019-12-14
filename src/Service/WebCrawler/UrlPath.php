@@ -57,7 +57,7 @@ class UrlPath
     {
         return
             filter_var($this->url, FILTER_VALIDATE_URL)
-            && (bool)!preg_match('/\.(jpg|png|gif|jpeg|pdf)/', $this->url);
+            && (bool)!preg_match('/\.(jpg|png|gif|jpeg|pdf|mp3|mp4|zip)/', $this->url);
     }
 
     /**
