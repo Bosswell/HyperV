@@ -17,3 +17,6 @@ framework:
 
     validation:
         { enable_annotations: true }
+
+    http_client:
+        max_host_connections: 100

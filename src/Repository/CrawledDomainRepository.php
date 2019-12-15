@@ -19,22 +19,18 @@ class CrawledDomainRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, CrawledDomain::class);
     }
-
-    /**
-     * @throws NonUniqueResultException
-     */
-    public function findLatestCrawledLinks(string $domainName): ?int
-    {
-        /** @var CrawledDomain $history */
-        $history =  $this->createQueryBuilder('c')
-            ->andWhere('c.domainName = :domainName')
-            ->setParameter('domainName', $domainName)
-            ->orderBy('c.cratedAt', 'DESC')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-
-        return $history->getCrawledUrls() ?? null;
-    }
+//
+//    /**
+//     * @throws NonUniqueResultException
+//     */
+//    public function findLatestCrawledDomain(string $domainName): ?CrawledDomain
+//    {
+//        return $this->createQueryBuilder('c')
+//            ->andWhere('c.domainName = :domainName')
+//            ->setParameter('domainName', $domainName)
+//            ->orderBy('c.cratedAt', 'DESC')
+//            ->getQuery()
+//            ->getOneOrNullResult()
+//        ;
+//    }
 }

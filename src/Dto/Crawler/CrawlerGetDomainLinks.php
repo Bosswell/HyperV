@@ -4,7 +4,7 @@ namespace App\Dto\Crawler;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-final class CrawlerGetLinks
+final class CrawlerGetDomainLinks
 {
     /**
      * @var string
@@ -15,11 +15,6 @@ final class CrawlerGetLinks
      * )
      */
     private $domainUrl;
-
-    /**
-     * @var string
-     */
-    private $pattern;
 
     /**
      * @Assert\Type(
@@ -42,9 +37,8 @@ final class CrawlerGetLinks
     {
         if (!is_null($data)) {
             $this->domainUrl = $data['domainUrl'] ?? null;
-            $this->pattern = $data['pattern'] ?? '';
             $this->excludedPaths = $data['excludedPaths'] ?? [];
-            $this->limit = $data['limit'] ?? 0;
+            $this->limit = (int)$data['limit'] ?? 0;
         }
     }
 
@@ -54,14 +48,6 @@ final class CrawlerGetLinks
     public function getDomainUrl(): string
     {
         return $this->domainUrl;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPattern(): ?string
-    {
-        return $this->pattern;
     }
 
     /**
@@ -78,14 +64,6 @@ final class CrawlerGetLinks
     public function getLimit(): int
     {
         return $this->limit;
-    }
-
-    /**
-     * @return string
-     */
-    public function getEncodedPattern(): string
-    {
-        return base64_encode('pattern_' . $this->domainUrl . $this->pattern ?? '');
     }
 
     /**

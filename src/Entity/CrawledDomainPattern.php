@@ -28,6 +28,11 @@ class CrawledDomainPattern
      */
     private $crawledDomains;
 
+    /**
+     * @ORM\Column(type="integer")
+     */
+    private $urlsQuantity;
+
     public function __construct()
     {
         $this->crawledDomains = new ArrayCollection();
@@ -72,6 +77,18 @@ class CrawledDomainPattern
         if ($this->crawledDomains->contains($crawledDomain)) {
             $this->crawledDomains->removeElement($crawledDomain);
         }
+
+        return $this;
+    }
+
+    public function getUrlsQuantity(): ?int
+    {
+        return $this->urlsQuantity;
+    }
+
+    public function setUrlsQuantity(int $urlsQuantity): self
+    {
+        $this->urlsQuantity = $urlsQuantity;
 
         return $this;
     }

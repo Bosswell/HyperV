@@ -5,10 +5,10 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints\DateTime;
+use DateTime;
 
 /**
- * @ORM\Entity(repositoryClass="CrawledDomainHistoryRepository")
+ * @ORM\Entity(repositoryClass="CrawledDomainRepository")
  */
 class CrawledDomain
 {
@@ -20,9 +20,16 @@ class CrawledDomain
     private $id;
 
     /**
+     * @var int
      * @ORM\Column(type="integer")
      */
-    private $crawledUrls;
+    private $crawledLinks;
+
+    /**
+     * @var int
+     * @ORM\Column(type="integer")
+     */
+    private $extractedLinks;
 
     /**
      * @ORM\Column(type="string", length=255, unique=true)
@@ -39,10 +46,54 @@ class CrawledDomain
      */
     private $crawledDomainPatterns;
 
+    /**
+     * @ORM\Column(type="string", length=255)
+     */
+    private $fileName;
+
+
     public function __construct()
     {
         $this->createdAt = new DateTime('now');
         $this->crawledDomainPatterns = new ArrayCollection();
+    }
+
+    /**
+     * @return int
+     */
+    public function getCrawledLinks(): int
+    {
+        return $this->crawledLinks;
+    }
+
+    /**
+     * @return $this
+     * @param int $crawledLinks
+     */
+    public function setCrawledLinks(int $crawledLinks): self
+    {
+        $this->crawledLinks = $crawledLinks;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getExtractedLinks(): int
+    {
+        return $this->extractedLinks;
+    }
+
+    /**
+     * @return $this
+     * @param int $extractedLinks
+     */
+    public function setExtractedLinks(int $extractedLinks): self
+    {
+        $this->extractedLinks = $extractedLinks;
+
+        return $this;
     }
 
     public function getId(): ?int
@@ -50,17 +101,6 @@ class CrawledDomain
         return $this->id;
     }
 
-    public function getCrawledUrls(): ?int
-    {
-        return $this->crawledUrls;
-    }
-
-    public function setCrawledUrls(int $crawledUrls): self
-    {
-        $this->crawledUrls = $crawledUrls;
-
-        return $this;
-    }
 
     public function getDomainName(): ?string
     {
@@ -110,6 +150,18 @@ class CrawledDomain
             $this->crawledDomainPatterns->removeElement($crawledDomainPattern);
             $crawledDomainPattern->removeCrawledDomain($this);
         }
+
+        return $this;
+    }
+
+    public function getFileName(): ?string
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(string $fileName): self
+    {
+        $this->fileName = $fileName;
 
         return $this;
     }

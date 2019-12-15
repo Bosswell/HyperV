@@ -151,7 +151,7 @@ class WebCrawler
                     }
                 }
 
-                if ($limit <= $crawledLinks) {
+                if (!is_null($limit) && $limit <= $crawledLinks) {
                     break 2;
                 }
             }
