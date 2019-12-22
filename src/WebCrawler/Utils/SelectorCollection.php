@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Service\WebCrawler;
+namespace App\WebCrawler\Utils;
 
 use Doctrine\Common\Collections\ArrayCollection;
 

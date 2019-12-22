@@ -8,9 +8,9 @@ use Doctrine\ORM\Mapping as ORM;
 use DateTime;
 
 /**
- * @ORM\Entity(repositoryClass="CrawledDomainRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\CrawlingHistoryRepository")
  */
-class CrawledDomain
+class CrawlingHistory
 {
     /**
      * @ORM\Id()
@@ -32,30 +32,36 @@ class CrawledDomain
     private $extractedLinks;
 
     /**
-     * @ORM\Column(type="string", length=255, unique=true)
-     */
-    private $domainName;
-
-    /**
      * @ORM\Column(type="datetime")
      */
     private $createdAt;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\CrawledDomainPattern", mappedBy="crawledDomains")
+     * @ORM\ManyToMany(targetEntity="App\Entity\CrawlingPattern", mappedBy="crawlingHistory")
      */
-    private $crawledDomainPatterns;
+    private $crawlingPatterns;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
     private $fileName;
 
+    /**
+     * @ORM\ManyToOne(targetEntity="App\Entity\Domain", inversedBy="crawlingHistory")
+     * @ORM\JoinColumn(nullable=false)
+     */
+    private $domain;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    private $updatedAt;
+
 
     public function __construct()
     {
-        $this->createdAt = new DateTime('now');
-        $this->crawledDomainPatterns = new ArrayCollection();
+        $this->createdAt = $this->updatedAt = new DateTime('now');
+        $this->crawlingPatterns = new ArrayCollection();
     }
 
     /**
@@ -101,19 +107,6 @@ class CrawledDomain
         return $this->id;
     }
 
-
-    public function getDomainName(): ?string
-    {
-        return $this->domainName;
-    }
-
-    public function setDomainName(string $domainName): self
-    {
-        $this->domainName = $domainName;
-
-        return $this;
-    }
-
     public function getCreatedAt(): ?\DateTimeInterface
     {
         return $this->createdAt;
@@ -127,28 +120,28 @@ class CrawledDomain
     }
 
     /**
-     * @return Collection|CrawledDomainPattern[]
+     * @return Collection|CrawlingPattern[]
      */
     public function getCrawledDomainPatterns(): Collection
     {
-        return $this->crawledDomainPatterns;
+        return $this->crawlingPatterns;
     }
 
-    public function addCrawledDomainPattern(CrawledDomainPattern $crawledDomainPattern): self
+    public function addCrawledDomainPattern(CrawlingPattern $crawlingPattern): self
     {
-        if (!$this->crawledDomainPatterns->contains($crawledDomainPattern)) {
-            $this->crawledDomainPatterns[] = $crawledDomainPattern;
-            $crawledDomainPattern->addCrawledDomain($this);
+        if (!$this->crawlingPatterns->contains($crawlingPattern)) {
+            $this->$crawlingPattern[] = $crawlingPattern;
+            $crawlingPattern->addCrawlingHistory($this);
         }
 
         return $this;
     }
 
-    public function removeCrawledDomainPattern(CrawledDomainPattern $crawledDomainPattern): self
+    public function removeCrawledDomainPattern(CrawlingPattern $crawlingPattern): self
     {
-        if ($this->crawledDomainPatterns->contains($crawledDomainPattern)) {
-            $this->crawledDomainPatterns->removeElement($crawledDomainPattern);
-            $crawledDomainPattern->removeCrawledDomain($this);
+        if ($this->crawlingPatterns->contains($crawlingPattern)) {
+            $this->crawlingPatterns->removeElement($crawlingPattern);
+            $crawlingPattern->removeCrawlingHistory($this);
         }
 
         return $this;
@@ -162,6 +155,30 @@ class CrawledDomain
     public function setFileName(string $fileName): self
     {
         $this->fileName = $fileName;
+
+        return $this;
+    }
+
+    public function getDomain(): ?Domain
+    {
+        return $this->domain;
+    }
+
+    public function setDomain(?Domain $domain): self
+    {
+        $this->domain = $domain;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeInterface
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(\DateTimeInterface $updatedAt): self
+    {
+        $this->updatedAt = $updatedAt;
 
         return $this;
     }

@@ -1,7 +1,11 @@
 <?php
 
-namespace App\Service\WebCrawler;
+namespace App\WebCrawler;
 
+use App\WebCrawler\Utils\DomainLinks;
+use App\WebCrawler\Utils\Selector;
+use App\WebCrawler\Utils\SelectorCollection;
+use App\WebCrawler\Utils\UrlPath;
 use Generator;
 use Psr\Cache\CacheException;
 use Psr\Cache\CacheItemPoolInterface;

@@ -7,9 +7,9 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\CrawledDomainPatternRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\CrawlingPatternRepository")
  */
-class CrawledDomainPattern
+class CrawlingPattern
 {
     /**
      * @ORM\Id()
@@ -24,9 +24,9 @@ class CrawledDomainPattern
     private $pattern;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\CrawledDomain", inversedBy="crawledDomainPatterns")
+     * @ORM\ManyToMany(targetEntity="App\Entity\CrawlingHistory", inversedBy="crawlingPatterns")
      */
-    private $crawledDomains;
+    private $crawlingHistory;
 
     /**
      * @ORM\Column(type="integer")
@@ -35,7 +35,7 @@ class CrawledDomainPattern
 
     public function __construct()
     {
-        $this->crawledDomains = new ArrayCollection();
+        $this->crawlingHistory = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -56,26 +56,26 @@ class CrawledDomainPattern
     }
 
     /**
-     * @return Collection|CrawledDomain[]
+     * @return Collection|CrawlingHistory[]
      */
-    public function getCrawledDomains(): Collection
+    public function getCrawlingHistory(): Collection
     {
-        return $this->crawledDomains;
+        return $this->crawlingHistory;
     }
 
-    public function addCrawledDomain(CrawledDomain $crawledDomain): self
+    public function addCrawlingHistory(CrawlingHistory $crawlingHistory): self
     {
-        if (!$this->crawledDomains->contains($crawledDomain)) {
-            $this->crawledDomains[] = $crawledDomain;
+        if (!$this->crawlingHistory->contains($crawlingHistory)) {
+            $this->crawlingHistory[] = $crawlingHistory;
         }
 
         return $this;
     }
 
-    public function removeCrawledDomain(CrawledDomain $crawledDomain): self
+    public function removeCrawlingHistory(CrawlingHistory $crawlingHistory): self
     {
-        if ($this->crawledDomains->contains($crawledDomain)) {
-            $this->crawledDomains->removeElement($crawledDomain);
+        if ($this->crawlingHistory->contains($crawlingHistory)) {
+            $this->crawlingHistory->removeElement($crawlingHistory);
         }
 
         return $this;

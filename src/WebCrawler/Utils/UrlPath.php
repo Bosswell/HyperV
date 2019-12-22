@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Service\WebCrawler;
+namespace App\WebCrawler\Utils;
 
 use InvalidArgumentException;
-
 
 class UrlPath
 {

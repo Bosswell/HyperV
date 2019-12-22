@@ -2,25 +2,25 @@
 
 namespace App\Repository;
 
-use App\Entity\CrawledDomainPattern;
+use App\Entity\CrawlingPattern;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
- * @method CrawledDomainPattern|null find($id, $lockMode = null, $lockVersion = null)
- * @method CrawledDomainPattern|null findOneBy(array $criteria, array $orderBy = null)
- * @method CrawledDomainPattern[]    findAll()
- * @method CrawledDomainPattern[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @method CrawlingPattern|null find($id, $lockMode = null, $lockVersion = null)
+ * @method CrawlingPattern|null findOneBy(array $criteria, array $orderBy = null)
+ * @method CrawlingPattern[]    findAll()
+ * @method CrawlingPattern[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class CrawledDomainPatternRepository extends ServiceEntityRepository
+class CrawlingPatternRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, CrawledDomainPattern::class);
+        parent::__construct($registry, CrawlingPattern::class);
     }
 
     // /**
-    //  * @return CrawledDomainPattern[] Returns an array of CrawledDomainPattern objects
+    //  * @return CrawlingPattern[] Returns an array of CrawlingPattern objects
     //  */
     /*
     public function findByExampleField($value)
@@ -37,7 +37,7 @@ class CrawledDomainPatternRepository extends ServiceEntityRepository
     */
 
     /*
-    public function findOneBySomeField($value): ?CrawledDomainPattern
+    public function findOneBySomeField($value): ?CrawlingPattern
     {
         return $this->createQueryBuilder('c')
             ->andWhere('c.exampleField = :val')
