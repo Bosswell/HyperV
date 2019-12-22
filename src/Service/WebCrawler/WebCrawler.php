@@ -3,13 +3,16 @@
 namespace App\Service\WebCrawler;
 
 use Generator;
+use Psr\Cache\CacheException;
+use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerInterface;
-use SplFileObject;
+use SplFileObject;;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use Throwable;
 
 class WebCrawler
@@ -27,11 +30,19 @@ class WebCrawler
     /** @var ParameterBagInterface */
     private $parameterBag;
 
-    public function __construct(HttpClientInterface $httpClient, LoggerInterface $linkCrawlerLogger, ParameterBagInterface $parameterBag)
-    {
+    /** @var CacheItemPoolInterface */
+    private $cacheItemPool;
+
+    public function __construct(
+        HttpClientInterface $httpClient,
+        LoggerInterface $linkCrawlerLogger,
+        ParameterBagInterface $parameterBag,
+        CacheItemPoolInterface $cacheItemPool
+    ) {
         $this->httpClient = $httpClient;
         $this->logger = $linkCrawlerLogger;
         $this->parameterBag = $parameterBag;
+        $this->cacheItemPool = $cacheItemPool;
     }
 
     /**
@@ -60,11 +71,6 @@ class WebCrawler
     }
 
     /**
-     * TODO We need to do something if TransportException occur.
-     * TODO Store those links in array and for example if array has more element then 1000,
-     * TODO break loop
-     * TODO If loop has been broken or not, all those links append at the end of the file and decrease crawled links
-     *
      * @return DomainLinks
      * @param UrlPath $urlPath
      * @param callable|null $filterCallback
@@ -102,7 +108,7 @@ class WebCrawler
             foreach ($this->createRequests($file, $crawledLinks) as $httpResponsesChunk) {
                 foreach ($this->httpClient->stream($httpResponsesChunk, 3) as $response => $chunk) {
                     try {
-                        if ($chunk->isFirst()) {
+                        if ($chunk->isFirst() || $chunk->isTimeout()) {
                             $crawledLinks++;
                         }
 
@@ -117,8 +123,9 @@ class WebCrawler
                             continue;
                         } elseif ($chunk->isLast()) {
                             $document = $response->getContent(false);
-                            $response->cancel();
                             $pageLinks = $this->extractPageLinks($crawler, $document, $urlPath->getDomain(), $filterCallback);
+
+                            $this->cacheHtmlDoc($document, $response);
 
                             $file->rewind();
                             while (!$file->eof()) {
@@ -192,6 +199,25 @@ class WebCrawler
         unset($links);
 
         return array_unique($crawledLinks);
+    }
+
+    private function cacheHtmlDoc(string $document, ResponseInterface $response): void
+    {
+        try {
+            $cacheItem = $this->cacheItemPool->getItem(base64_encode($response->getInfo()['url']));
+
+            if ($this->cacheItemPool->hasItem($cacheItem->getKey())) {
+                $this->cacheItemPool->deleteItem($cacheItem->getKey());
+            }
+
+            $cacheItem->set($document);
+
+            $this->cacheItemPool->save($cacheItem);
+        } catch (CacheException $ex) {
+            $this->logger->warning('Problem has occur while trying to cache HTML document.', [
+                $ex->getMessage()
+            ]);
+        }
     }
 
     private function createRequests(SplFileObject $file, int $crawledLinks): Generator

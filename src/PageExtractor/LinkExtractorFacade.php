@@ -36,9 +36,6 @@ final class LinkExtractorFacade
     /** @var CrawledDomainPatternRepository */
     private $crawledDomainPatternRepository;
 
-    /** @var int */
-    private $cacheExpireTime;
-
     public function __construct(
         WebCrawler $webCrawler,
         CacheInterface $cache,
@@ -53,14 +50,13 @@ final class LinkExtractorFacade
         $this->entityManager = $entityManager;
         $this->crawledDomainRepository = $crawledDomainRepository;
         $this->crawledDomainPatternRepository = $crawledDomainPatternRepository;
-        $this->cacheExpireTime = 10000;
     }
 
     /**
      * @throws Throwable
      * @throws ValidationException
      */
-    public function getDomainLinks(CrawlerGetDomainLinks $crawlerGetDomainLinks, ?int $limit = null, bool $continueCrawling = false)
+    public function crawlDomainLinks(CrawlerGetDomainLinks $crawlerGetDomainLinks, ?int $limit = null, bool $continueCrawling = false)
     {
         $this->dtoValidator->validate($crawlerGetDomainLinks);
 
@@ -76,20 +72,17 @@ final class LinkExtractorFacade
 
         $domainUrlPath = new UrlPath($crawlerGetDomainLinks->getDomainUrl());
 
-        $crawledDomain = $this->crawledDomainRepository
-            ->findOneBy(['domainName' => $domainUrlPath->getDomain()]);
+        if ($continueCrawling) {
+            /** @var CrawledDomain|null $latestCrawledDomain */
+            $latestCrawledDomain = $this->crawledDomainRepository->findLatestCrawledDomain($domainUrlPath->getDomain());
 
-        if (!is_null($crawledDomain)) {
-            $this->entityManager->remove($crawledDomain);
-            $this->entityManager->flush();
-        }
-
-        if ($continueCrawling && !is_null($crawledDomain)) {
-            $domainLinks = new DomainLinks(
-                $crawledDomain->getExtractedLinks(),
-                $crawledDomain->getCrawledLinks(),
-                $crawledDomain->getFileName()
-            );
+            if (!is_null($latestCrawledDomain)) {
+                $domainLinks = new DomainLinks(
+                    $latestCrawledDomain->getExtractedLinks(),
+                    $latestCrawledDomain->getCrawledLinks(),
+                    $latestCrawledDomain->getFileName()
+                );
+            }
         }
 
         $domainLinks = $this->webCrawler->getDomainLinks($domainUrlPath, $filterCallback, $limit, $domainLinks ?? null);
@@ -102,5 +95,10 @@ final class LinkExtractorFacade
 
         $this->entityManager->persist($crawledDomain);
         $this->entityManager->flush();
+    }
+
+    public function getDomainLinksByPattern()
+    {
+
     }
 }
