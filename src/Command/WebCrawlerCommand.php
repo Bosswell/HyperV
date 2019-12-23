@@ -4,7 +4,7 @@ namespace App\Command;
 
 use App\Dto\Crawler\CrawlerGetDomainLinks;
 use App\Exception\ValidationException;
-use App\PageExtractor\LinkExtractorFacade;
+use App\WebCrawler\WebCrawlerFacade;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,14 +13,14 @@ use Throwable;
 
 class WebCrawlerCommand extends Command
 {
-    /** @var LinkExtractorFacade */
-    private $linkExtractorFacade;
+    /** @var WebCrawlerFacade */
+    private $webCrawlerFacade;
 
-    public function __construct(LinkExtractorFacade $linkExtractorFacade)
+    public function __construct(WebCrawlerFacade $webCrawlerFacade)
     {
         parent::__construct('crawler:extract:domain:links');
 
-        $this->linkExtractorFacade = $linkExtractorFacade;
+        $this->webCrawlerFacade = $webCrawlerFacade;
     }
 
     protected function configure()
@@ -28,8 +28,8 @@ class WebCrawlerCommand extends Command
         $this
             ->addOption('domainUrl', 'd', InputOption::VALUE_REQUIRED, 'Website base domain url ex. http://youtube.com/')
             ->addOption('excludedPaths', 'p',InputOption::VALUE_OPTIONAL | InputOption::VALUE_IS_ARRAY, 'Excluded paths ex. /pl/, /de/, ?search')
-            ->addOption('limit', 'l',InputOption::VALUE_OPTIONAL, 'How many urls')
-            ->addOption('continueCrawling', 'c',InputOption::VALUE_OPTIONAL, 'Continue crawling a site', false)
+            ->addOption('limit', 'l',InputOption::VALUE_OPTIONAL, 'How many urls you want to crawl')
+            ->addOption('crawlingHistoryId', 'c',InputOption::VALUE_OPTIONAL, 'Historical crawling id which you want to continue')
         ;
     }
 
@@ -46,7 +46,12 @@ class WebCrawlerCommand extends Command
 
         $output->writeln('Extracting domain urls..');
         $output->writeln('Visit /var/log/linkCrawler.log to see more details');
-        $this->linkExtractorFacade->getDomainLinks($crawlerGetDomainLinks, $input->getOption('limit'),  (bool)$input->getOption('continueCrawling'));
+
+        $this->webCrawlerFacade->crawlDomainLinks(
+            $crawlerGetDomainLinks,
+            $input->getOption('limit'),
+            $input->getOption('crawlingHistoryId')
+        );
 
         return 0;
     }

@@ -118,7 +118,7 @@ final class WebCrawlerFacade
     }
 
     /**
-     * @return Collection|CrawlingHistory[]
+     * @return Collection|CrawlingHistory[]|null
      * @param string $domain
      */
     public function getDomainCrawlingHistory(string $domain): ?Collection
