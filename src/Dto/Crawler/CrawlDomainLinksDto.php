@@ -4,7 +4,7 @@ namespace App\Dto\Crawler;
 
 use Symfony\Component\Validator\Constraints as Assert;
 
-final class CrawlerGetDomainLinks
+final class CrawlDomainLinksDto
 {
     /**
      * @var string

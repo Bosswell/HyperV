@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Dto\Crawler\CrawlerGetDomainLinks;
+use App\Dto\Crawler\CrawlDomainLinksDto;
 use App\Exception\ValidationException;
 use App\WebCrawler\WebCrawlerFacade;
 use Symfony\Component\Console\Command\Command;
@@ -42,7 +42,7 @@ class WebCrawlerCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $crawlerGetDomainLinks = new CrawlerGetDomainLinks($input->getOptions());
+        $crawlerGetDomainLinks = new CrawlDomainLinksDto($input->getOptions());
 
         $output->writeln('Extracting domain urls..');
         $output->writeln('Visit /var/log/linkCrawler.log to see more details');

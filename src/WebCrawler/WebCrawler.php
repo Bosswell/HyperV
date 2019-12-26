@@ -2,6 +2,7 @@
 
 namespace App\WebCrawler;
 
+use App\Service\CrawlerResourcesManager;
 use App\WebCrawler\Utils\DomainLinks;
 use App\WebCrawler\Utils\Selector;
 use App\WebCrawler\Utils\SelectorCollection;
@@ -31,22 +32,22 @@ class WebCrawler
     /** @var LoggerInterface */
     private $logger;
 
-    /** @var ParameterBagInterface */
-    private $parameterBag;
-
     /** @var CacheItemPoolInterface */
     private $cacheItemPool;
+
+    /** @var CrawlerResourcesManager */
+    private $crawledResourceManager;
 
     public function __construct(
         HttpClientInterface $httpClient,
         LoggerInterface $linkCrawlerLogger,
-        ParameterBagInterface $parameterBag,
-        CacheItemPoolInterface $cacheItemPool
+        CacheItemPoolInterface $cacheItemPool,
+        CrawlerResourcesManager $crawlerResourcesManager
     ) {
         $this->httpClient = $httpClient;
         $this->logger = $linkCrawlerLogger;
-        $this->parameterBag = $parameterBag;
         $this->cacheItemPool = $cacheItemPool;
+        $this->crawledResourceManager = $crawlerResourcesManager;
     }
 
     /**
@@ -89,27 +90,15 @@ class WebCrawler
         if (!is_null($domainLinks)) {
             $extractedLinks = $domainLinks->getExtractedLinks();
             $crawledLinks = $domainLinks->getCrawledLinks();
-            $fileName = $domainLinks->getFileName();
         } else {
-            $date = new \DateTime('now');
-
             $extractedLinks = 0;
             $crawledLinks = 0;
-            $fileName = sprintf(
-                '%s__%s',
-                $urlPath->getDomain(),
-                $date->format('Y-m-d__H_i_s')
-            );
         }
 
-        $varDir = ($this->parameterBag->get('kernel.project_dir') . '/var/');
-        $pageLinksFile = $varDir . $fileName . '.txt';
-
-        $file = new SplFileObject($pageLinksFile, 'a+');
-        $file->fwrite($urlPath->getUrl(). "\n");
+        $pageLinksFile = $this->crawledResourceManager->getDomainCrawledLinksFile($urlPath, $domainLinks);
 
         do {
-            foreach ($this->createRequests($file, $crawledLinks) as $httpResponsesChunk) {
+            foreach ($this->createRequests($pageLinksFile, $crawledLinks) as $httpResponsesChunk) {
                 foreach ($this->httpClient->stream($httpResponsesChunk, 3) as $response => $chunk) {
                     try {
                         if ($chunk->isFirst() || $chunk->isTimeout()) {
@@ -131,9 +120,9 @@ class WebCrawler
 
                             $this->cacheHtmlDoc($document, $response);
 
-                            $file->rewind();
-                            while (!$file->eof()) {
-                                if (($key = array_search(rtrim($file->fgets()), $pageLinks)) !== false) {
+                            $pageLinksFile->rewind();
+                            while (!$pageLinksFile->eof()) {
+                                if (($key = array_search(rtrim($pageLinksFile->fgets()), $pageLinks)) !== false) {
                                     unset($pageLinks[$key], $key);
                                     continue;
                                 } elseif (empty($pageLinks)) {
@@ -143,7 +132,7 @@ class WebCrawler
 
                             foreach ($pageLinks as $pageLink) {
                                 $this->logger->info(sprintf('Crawled url [%s]', $pageLink));
-                                $file->fwrite(sprintf("%s\n", $pageLink));
+                                $pageLinksFile->fwrite(sprintf("%s\n", $pageLink));
                                 $extractedLinks++;
                             }
 
@@ -168,7 +157,7 @@ class WebCrawler
             }
         } while ($extractedLinks !== $crawledLinks);
 
-        return new DomainLinks($extractedLinks, $crawledLinks, $fileName);
+        return new DomainLinks($extractedLinks, $crawledLinks, $pageLinksFile->getFilename());
     }
 
     /**

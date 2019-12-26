@@ -1,5 +1,5 @@
 parameters:
-
+    crawled.links.dir: '%kernel.project_dir%/var/'
 services:
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.

@@ -127,7 +127,7 @@ class CrawlingHistory
         return $this->crawlingPatterns;
     }
 
-    public function addCrawledDomainPattern(CrawlingPattern $crawlingPattern): self
+    public function addCrawlingPattern(CrawlingPattern $crawlingPattern): self
     {
         if (!$this->crawlingPatterns->contains($crawlingPattern)) {
             $this->$crawlingPattern[] = $crawlingPattern;
@@ -137,7 +137,7 @@ class CrawlingHistory
         return $this;
     }
 
-    public function removeCrawledDomainPattern(CrawlingPattern $crawlingPattern): self
+    public function removeCrawlingPattern(CrawlingPattern $crawlingPattern): self
     {
         if ($this->crawlingPatterns->contains($crawlingPattern)) {
             $this->crawlingPatterns->removeElement($crawlingPattern);

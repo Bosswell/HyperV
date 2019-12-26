@@ -2,16 +2,22 @@
 
 namespace App\WebCrawler;
 
-use App\Dto\Crawler\CrawlerGetDomainLinks;
+use App\Dto\Crawler\CrawlDomainLinksDto;
+use App\Dto\Crawler\FilterCrawledLinksDto;
 use App\Entity\CrawlingHistory;
+use App\Entity\CrawlingPattern;
 use App\Entity\Domain;
 use App\Exception\ValidationException;
 use App\Repository\DomainRepository;
+use App\Service\CrawlerResourcesManager;
 use App\Service\DtoValidator;
 use App\WebCrawler\Utils\DomainLinks;
 use App\WebCrawler\Utils\UrlPath;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\EntityNotFoundException;
+use Exception;
+use Psr\Cache\InvalidArgumentException;
+use SplFileObject;
 use Symfony\Contracts\Cache\CacheInterface;
 use Throwable;
 
@@ -33,25 +39,30 @@ final class WebCrawlerFacade
     /** @var DomainRepository */
     private $domainRepository;
 
+    /** @var CrawlerResourcesManager */
+    private $crawledResourceManager;
+
     public function __construct(
         WebCrawler $webCrawler,
         CacheInterface $cache,
         DtoValidator $dtoValidator,
         EntityManagerInterface $entityManager,
-        DomainRepository $domainRepository
+        DomainRepository $domainRepository,
+        CrawlerResourcesManager $crawlerResourcesManager
     ) {
         $this->webCrawler = $webCrawler;
         $this->cache = $cache;
         $this->dtoValidator = $dtoValidator;
         $this->entityManager = $entityManager;
         $this->domainRepository = $domainRepository;
+        $this->crawledResourceManager = $crawlerResourcesManager;
     }
 
     /**
      * @throws Throwable
      * @throws ValidationException
      */
-    public function crawlDomainLinks(CrawlerGetDomainLinks $crawlerGetDomainLinks, ?int $limit = null, ?int $crawlingHistoryId = null)
+    public function crawlDomainLinks(CrawlDomainLinksDto $crawlerGetDomainLinks, ?int $limit = null, ?int $crawlingHistoryId = null)
     {
         $this->dtoValidator->validate($crawlerGetDomainLinks);
 
@@ -112,19 +123,39 @@ final class WebCrawlerFacade
         $this->entityManager->flush();
     }
 
-    public function getDomainLinksByPattern()
-    {
-
-    }
-
     /**
-     * @return Collection|CrawlingHistory[]|null
-     * @param string $domain
+     * @return SplFileObject
+     * @throws EntityNotFoundException
+     * @throws InvalidArgumentException
+     * @throws Exception
+     * @param FilterCrawledLinksDto $filterDomainLinksDto
      */
-    public function getDomainCrawlingHistory(string $domain): ?Collection
+    public function getDomainLinksByPattern(FilterCrawledLinksDto $filterDomainLinksDto, bool $refresh = false): SplFileObject
     {
-        $domain = $this->domainRepository->findOneBy(['name' => $domain]);
+        $crawlingHistory = $this->entityManager->find(CrawlingHistory::class, $filterDomainLinksDto->getCrawlingHistoryId());
 
-        return $domain->getCrawlingHistory() ?? null;
+        if (is_null($crawlingHistory)) {
+            throw new EntityNotFoundException('Given domain has not been found');
+        }
+
+        if ($refresh) {
+            $this->crawledResourceManager->removeFilteredDomainLinks($filterDomainLinksDto, $crawlingHistory->getDomain()->getName());
+            $this->cache->delete($filterDomainLinksDto->getEncodedPattern());
+        }
+
+        /** @var SplFileObject $splFileObject */
+        return $this->cache->get($filterDomainLinksDto->getEncodedPattern(), function () use ($filterDomainLinksDto, $crawlingHistory) {
+            [$file, $filteredLinks] = $this->crawledResourceManager->filterDomainLinksByPattern($filterDomainLinksDto, $crawlingHistory);
+
+            $crawlingPattern = (new CrawlingPattern())
+                ->setPattern($filterDomainLinksDto->getPattern())
+                ->setUrlsQuantity($filteredLinks);
+
+            $crawlingHistory->addCrawlingPattern($crawlingPattern);
+            $this->entityManager->persist($crawlingHistory);
+            $this->entityManager->flush();
+
+            return $file;
+        });
     }
 }

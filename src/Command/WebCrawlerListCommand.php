@@ -3,7 +3,8 @@
 namespace App\Command;
 
 use App\Entity\CrawlingHistory;
-use App\WebCrawler\WebCrawlerFacade;
+use App\Repository\DomainRepository;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
@@ -12,14 +13,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class WebCrawlerListCommand extends Command
 {
-    /** @var WebCrawlerFacade */
-    private $webCrawlerFacade;
+    /** @var DomainRepository */
+    private $domainRepository;
 
-    public function __construct(WebCrawlerFacade $webCrawlerFacade)
+    public function __construct(DomainRepository $domainRepository)
     {
         parent::__construct('crawler:list:domain-crawling-history');
 
-        $this->webCrawlerFacade = $webCrawlerFacade;
+        $this->domainRepository = $domainRepository;
     }
 
     protected function configure()
@@ -32,9 +33,10 @@ class WebCrawlerListCommand extends Command
     {
         $domain = $input->getArgument('domain');
 
-        $crawlingHistories = $this->webCrawlerFacade->getDomainCrawlingHistory($domain);
+        /** @var Collection $crawlingHistories */
+        $crawlingHistories = $this->domainRepository->findBy(['name' => $domain]);
 
-        if (is_null($crawlingHistories)) {
+        if (empty($crawlingHistories)) {
             return 0;
         }
 
