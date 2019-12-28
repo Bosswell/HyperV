@@ -4,7 +4,8 @@ namespace App\Repository;
 
 use App\Entity\CrawlingPattern;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Common\Persistence\ManagerRegistry;
+use Doctrine\DBAL\DBALException;
+use Doctrine\Persistence\ManagerRegistry;
 
 /**
  * @method CrawlingPattern|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,32 +20,27 @@ class CrawlingPatternRepository extends ServiceEntityRepository
         parent::__construct($registry, CrawlingPattern::class);
     }
 
-    // /**
-    //  * @return CrawlingPattern[] Returns an array of CrawlingPattern objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    /**
+     * @return array|null [pattern, urls_quantity]
+     * @throws DBALException
+     * @param string $pattern
+     */
+    public function findOneByPattern(string $pattern): ?array
     {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('c.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+        $sql = ' 
+            SELECT cp.pattern,
+                   cp.urls_quantity
+            FROM crawling_pattern cp
+            INNER JOIN crawling_pattern_crawling_history cpch 
+            ON cpch.crawling_pattern_id = cp.id
+            WHERE cp.pattern = :pattern
+        ';
 
-    /*
-    public function findOneBySomeField($value): ?CrawlingPattern
-    {
-        return $this->createQueryBuilder('c')
-            ->andWhere('c.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        $em = $this->getEntityManager();
+        $stmt = $em->getConnection()->prepare($sql);
+        $stmt->bindValue(':pattern', $pattern);
+        $result = $stmt->fetch();
+
+        return $result ? $result : null;
     }
-    */
 }
