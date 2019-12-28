@@ -17,13 +17,16 @@ class FilterCrawledLinksDto
     private $crawlingHistoryId;
 
     /**
+     * @Assert\NotNull(
+     *     message = "You need to specify filtering pattern"
+     * )
      * @var string
      */
     private $pattern;
 
     public function __construct(?array $data = null)
     {
-        $this->crawlingHistoryId = $data['crawlingHistoryId'] ?? null;
+        $this->crawlingHistoryId = (int)$data['crawlingHistoryId'] ?? null;
         $this->pattern = $data['pattern'] ?? null;
     }
 

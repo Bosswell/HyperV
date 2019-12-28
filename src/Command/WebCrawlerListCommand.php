@@ -3,6 +3,7 @@
 namespace App\Command;
 
 use App\Entity\CrawlingHistory;
+use App\Entity\Domain;
 use App\Repository\DomainRepository;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Console\Command\Command;
@@ -33,10 +34,11 @@ class WebCrawlerListCommand extends Command
     {
         $domain = $input->getArgument('domain');
 
-        /** @var Collection $crawlingHistories */
-        $crawlingHistories = $this->domainRepository->findBy(['name' => $domain]);
+        $crawlingHistory = $this->domainRepository
+            ->findOneBy(['name' => $domain])
+            ->getCrawlingHistory();
 
-        if (empty($crawlingHistories)) {
+        if (empty($crawlingHistory)) {
             return 0;
         }
 
@@ -50,7 +52,7 @@ class WebCrawlerListCommand extends Command
                     $crawlingHistory->getExtractedLinks(),
                     $crawlingHistory->getCreatedAt()->format('Y-m-d H:i:s')
                 ];
-            }, $crawlingHistories->toArray()))
+            }, $crawlingHistory->toArray()))
         ;
 
         $table->render();

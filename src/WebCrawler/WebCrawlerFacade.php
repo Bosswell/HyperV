@@ -8,6 +8,7 @@ use App\Entity\CrawlingHistory;
 use App\Entity\CrawlingPattern;
 use App\Entity\Domain;
 use App\Exception\ValidationException;
+use App\Repository\CrawlingPatternRepository;
 use App\Repository\DomainRepository;
 use App\Service\CrawlerResourcesManager;
 use App\Service\DtoValidator;
@@ -39,6 +40,9 @@ final class WebCrawlerFacade
     /** @var DomainRepository */
     private $domainRepository;
 
+    /** @var CrawlingPatternRepository */
+    private $crawlingPatternRepository;
+
     /** @var CrawlerResourcesManager */
     private $crawledResourceManager;
 
@@ -48,6 +52,7 @@ final class WebCrawlerFacade
         DtoValidator $dtoValidator,
         EntityManagerInterface $entityManager,
         DomainRepository $domainRepository,
+        CrawlingPatternRepository $crawlingPatternRepository,
         CrawlerResourcesManager $crawlerResourcesManager
     ) {
         $this->webCrawler = $webCrawler;
@@ -56,6 +61,7 @@ final class WebCrawlerFacade
         $this->entityManager = $entityManager;
         $this->domainRepository = $domainRepository;
         $this->crawledResourceManager = $crawlerResourcesManager;
+        $this->crawlingPatternRepository = $crawlingPatternRepository;
     }
 
     /**
@@ -126,36 +132,66 @@ final class WebCrawlerFacade
     /**
      * @return SplFileObject
      * @throws EntityNotFoundException
-     * @throws InvalidArgumentException
      * @throws Exception
      * @param FilterCrawledLinksDto $filterDomainLinksDto
      */
     public function getDomainLinksByPattern(FilterCrawledLinksDto $filterDomainLinksDto, bool $refresh = false): SplFileObject
     {
-        $crawlingHistory = $this->entityManager->find(CrawlingHistory::class, $filterDomainLinksDto->getCrawlingHistoryId());
+        $this->dtoValidator->validate($filterDomainLinksDto);
+
+        /** @var CrawlingHistory|null $crawlingHistory */
+        $crawlingHistory = $this->entityManager->find(
+            CrawlingHistory::class,
+            $filterDomainLinksDto->getCrawlingHistoryId()
+        );
 
         if (is_null($crawlingHistory)) {
             throw new EntityNotFoundException('Given domain has not been found');
         }
 
+        $domainName = $crawlingHistory->getDomain()->getName();
         if ($refresh) {
-            $this->crawledResourceManager->removeFilteredDomainLinks($filterDomainLinksDto, $crawlingHistory->getDomain()->getName());
-            $this->cache->delete($filterDomainLinksDto->getEncodedPattern());
+            $this->crawledResourceManager->removeFilteredDomainLinks($filterDomainLinksDto, $domainName);
         }
 
-        /** @var SplFileObject $splFileObject */
-        return $this->cache->get($filterDomainLinksDto->getEncodedPattern(), function () use ($filterDomainLinksDto, $crawlingHistory) {
-            [$file, $filteredLinks] = $this->crawledResourceManager->filterDomainLinksByPattern($filterDomainLinksDto, $crawlingHistory);
+        $filteredLinksFile = $this->crawledResourceManager->getFilteredDomainLinksFile(
+            $domainName,
+            $filterDomainLinksDto->getEncodedPattern()
+        );
 
-            $crawlingPattern = (new CrawlingPattern())
-                ->setPattern($filterDomainLinksDto->getPattern())
-                ->setUrlsQuantity($filteredLinks);
+        if ($filteredLinksFile->getSize() > 0) {
+            return $filteredLinksFile;
+        }
 
-            $crawlingHistory->addCrawlingPattern($crawlingPattern);
-            $this->entityManager->persist($crawlingHistory);
-            $this->entityManager->flush();
+        $this->filterDomainLinksByPattern($filterDomainLinksDto, $filteredLinksFile, $crawlingHistory);
 
-            return $file;
-        });
+        return $filteredLinksFile;
+    }
+
+    /**
+     * @throws Exception
+     * @param SplFileObject $filteredLinksFile
+     * @param CrawlingHistory $crawlingHistory
+     * @param FilterCrawledLinksDto $filterDomainLinksDto
+     */
+    private function filterDomainLinksByPattern(
+        FilterCrawledLinksDto $filterDomainLinksDto,
+        SplFileObject $filteredLinksFile,
+        CrawlingHistory $crawlingHistory
+    ): void {
+        $filteredLinksQuantity = $this->crawledResourceManager->filterDomainLinksByPattern(
+            $filterDomainLinksDto->getPattern(),
+            $filteredLinksFile,
+            $crawlingHistory
+        );
+
+        $crawlingPattern = new CrawlingPattern();
+        $crawlingPattern
+            ->setPattern($filterDomainLinksDto->getPattern())
+            ->setUrlsQuantity($filteredLinksQuantity);
+
+        $crawlingHistory->addCrawlingPattern($crawlingPattern);
+        $this->entityManager->persist($crawlingPattern);
+        $this->entityManager->flush();
     }
 }

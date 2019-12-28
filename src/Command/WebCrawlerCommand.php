@@ -18,7 +18,7 @@ class WebCrawlerCommand extends Command
 
     public function __construct(WebCrawlerFacade $webCrawlerFacade)
     {
-        parent::__construct('crawler:extract:domain:links');
+        parent::__construct('crawler:extract:domain-links');
 
         $this->webCrawlerFacade = $webCrawlerFacade;
     }
@@ -52,6 +52,8 @@ class WebCrawlerCommand extends Command
             $input->getOption('limit'),
             $input->getOption('crawlingHistoryId')
         );
+
+        $output->writeln('Links has been extracted');
 
         return 0;
     }

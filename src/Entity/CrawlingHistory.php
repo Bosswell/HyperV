@@ -130,7 +130,7 @@ class CrawlingHistory
     public function addCrawlingPattern(CrawlingPattern $crawlingPattern): self
     {
         if (!$this->crawlingPatterns->contains($crawlingPattern)) {
-            $this->$crawlingPattern[] = $crawlingPattern;
+            $this->crawlingPatterns[] = $crawlingPattern;
             $crawlingPattern->addCrawlingHistory($this);
         }
 

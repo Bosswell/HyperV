@@ -69,42 +69,52 @@ final class CrawlerResourcesManager
     }
 
     /**
-     * @return array [SplFileObject $file, int $filteredLinks]
+     * @return SplFileObject
      * @throws Exception
-     * @param FilterCrawledLinksDto $filterDomainLinksDto
-     * @param CrawlingHistory $crawlingHistory
+     * @param string $domainName
+     * @param string $fileName
      */
-    public function filterDomainLinksByPattern(FilterCrawledLinksDto $filterDomainLinksDto, CrawlingHistory $crawlingHistory): array
+    public function getFilteredDomainLinksFile(string $domainName, string $fileName): SplFileObject
     {
-        $rawDomainLinks = $this->getRawDomainLinks($crawlingHistory);
-        $crawledLinksPatternsDir = $this->crawledLinksDir . $crawlingHistory->getDomain()->getName();
+        $crawledLinksPatternsDir = $this->crawledLinksDir . $domainName;
 
         if (
-            !is_dir($this->crawledLinksDir . $crawlingHistory->getFileName())
+            !is_dir($crawledLinksPatternsDir)
             && !mkdir($crawledLinksPatternsDir)
         ) {
             throw new Exception('Unable to create directory for crawling patterns.');
         }
 
-        $domainLinksPatternFile = new SplFileObject(sprintf(
-            '%s%s.txt',
+        return new SplFileObject(sprintf(
+            '%s/%s.txt',
             $crawledLinksPatternsDir,
-            $filterDomainLinksDto->getEncodedPattern()
+            $fileName
         ), 'a+');
+    }
 
+    /**
+     * @return int -> filtered links
+     * @throws Exception
+     * @param CrawlingHistory $crawlingHistory
+     * @param string $pattern
+     * @param SplFileObject $domainLinksPatternFile
+     */
+    public function filterDomainLinksByPattern(
+        string $pattern,
+        SplFileObject $domainLinksPatternFile,
+        CrawlingHistory $crawlingHistory
+    ): int {
+        $rawDomainLinks = $this->getRawDomainLinks($crawlingHistory);
         $filteredLinks = 0;
-        while ($rawDomainLinks->eof()) {
-            $line = $rawDomainLinks->fgets();
-            if (preg_match(sprintf('/%s/', $filterDomainLinksDto->getPattern()), $line)) {
+
+        while ($line = rtrim($rawDomainLinks->fgets())) {
+            if (preg_match(sprintf('/%s/', $pattern), $line)) {
                 $domainLinksPatternFile->fwrite(sprintf("%s\n", $line));
                 $filteredLinks++;
             }
         }
 
-        return [
-            $domainLinksPatternFile,
-            $filteredLinks
-        ];
+        return $filteredLinks;
     }
 
     /**
