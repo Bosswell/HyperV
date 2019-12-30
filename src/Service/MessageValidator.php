@@ -5,7 +5,7 @@ namespace App\Service;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Exception\ValidationException;
 
-class DtoValidator
+class MessageValidator
 {
     /** @var ValidatorInterface */
     private $validator;
@@ -16,12 +16,11 @@ class DtoValidator
     }
 
     /**
-     * @param $dto
      * @throws ValidationException
      */
-    public function validate($dto)
+    public function validate(object $message)
     {
-        $violations = $this->validator->validate($dto);
+        $violations = $this->validator->validate($message);
 
         if ($violations->count() !== 0) {
             $errors = [];

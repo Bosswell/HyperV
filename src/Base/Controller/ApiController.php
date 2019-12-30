@@ -4,7 +4,7 @@ namespace App\Base\Controller;
 
 use App\Dto\User\UserRegister;
 use App\Entity\User;
-use App\Service\DtoValidator;
+use App\Service\MessageValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use AutoMapperPlus\Configuration\AutoMapperConfig;
 use AutoMapperPlus\AutoMapper;
@@ -12,7 +12,7 @@ use League\Fractal\Manager;
 
 abstract class ApiController extends AbstractController
 {
-    /** @var DtoValidator */
+    /** @var MessageValidator */
     protected $dtoValidator;
 
     /** @var AutoMapper */
@@ -22,7 +22,7 @@ abstract class ApiController extends AbstractController
     protected $fractalManager;
 
 
-    public function __construct(DtoValidator $dtoValidator, Manager $fractalManager)
+    public function __construct(MessageValidator $dtoValidator, Manager $fractalManager)
     {
         $this->dtoValidator = $dtoValidator;
         $this->fractalManager = $fractalManager;

@@ -2,196 +2,265 @@
 
 namespace App\WebCrawler;
 
-use App\Dto\Crawler\CrawlDomainLinksDto;
-use App\Dto\Crawler\FilterCrawledLinksDto;
-use App\Entity\CrawlingHistory;
-use App\Entity\CrawlingPattern;
-use App\Entity\Domain;
-use App\Exception\ValidationException;
-use App\Repository\CrawlingPatternRepository;
-use App\Repository\DomainRepository;
-use App\Service\CrawlerResourcesManager;
-use App\Service\DtoValidator;
+use App\Service\ResourcesManager;
 use App\WebCrawler\Utils\DomainLinks;
+use App\WebCrawler\Utils\Selector;
+use App\WebCrawler\Utils\SelectorCollection;
 use App\WebCrawler\Utils\UrlPath;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\EntityNotFoundException;
-use Exception;
-use Psr\Cache\InvalidArgumentException;
-use SplFileObject;
-use Symfony\Contracts\Cache\CacheInterface;
+use Generator;
+use Psr\Cache\CacheException;
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\Log\LoggerInterface;
+use SplFileObject;;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 use Throwable;
 
-
-final class WebCrawlerFacade
+class WebCrawlerFacade
 {
-    /** @var WebCrawler */
-    private $webCrawler;
+    // Crawling request are chunked because of memory leak
+    // 100 requests at once consume around 40 MB RAM
+    const MAX_REQUESTS_CHUNKS_SIZE = 100;
 
-    /** @var CacheInterface */
-    private $cache;
+    /** @var HttpClient */
+    private $httpClient;
 
-    /** @var DtoValidator */
-    private $dtoValidator;
+    /** @var LoggerInterface */
+    private $logger;
 
-    /** @var EntityManagerInterface */
-    private $entityManager;
+    /** @var CacheItemPoolInterface */
+    private $cacheItemPool;
 
-    /** @var DomainRepository */
-    private $domainRepository;
-
-    /** @var CrawlingPatternRepository */
-    private $crawlingPatternRepository;
-
-    /** @var CrawlerResourcesManager */
+    /** @var ResourcesManager */
     private $crawledResourceManager;
 
     public function __construct(
-        WebCrawler $webCrawler,
-        CacheInterface $cache,
-        DtoValidator $dtoValidator,
-        EntityManagerInterface $entityManager,
-        DomainRepository $domainRepository,
-        CrawlingPatternRepository $crawlingPatternRepository,
-        CrawlerResourcesManager $crawlerResourcesManager
+        HttpClientInterface $httpClient,
+        LoggerInterface $linkCrawlerLogger,
+        CacheItemPoolInterface $cacheItemPool,
+        ResourcesManager $crawlerResourcesManager
     ) {
-        $this->webCrawler = $webCrawler;
-        $this->cache = $cache;
-        $this->dtoValidator = $dtoValidator;
-        $this->entityManager = $entityManager;
-        $this->domainRepository = $domainRepository;
+        $this->httpClient = $httpClient;
+        $this->logger = $linkCrawlerLogger;
+        $this->cacheItemPool = $cacheItemPool;
         $this->crawledResourceManager = $crawlerResourcesManager;
-        $this->crawlingPatternRepository = $crawlingPatternRepository;
     }
 
     /**
+     * @return SelectorCollection
+     * @throws WebCrawlerException
+     * @param SelectorCollection $selectorCollection
+     * @param string $pageUrl
+     */
+    public function extractSelectorsFromWebPage(SelectorCollection $selectorCollection, string $pageUrl): SelectorCollection
+    {
+        try {
+            $crawler = new Crawler($this->httpClient->request('GET', $pageUrl)->getContent());
+
+            foreach ($selectorCollection as &$selector) {
+                $this->extractSelectors($selector, $crawler);
+            }
+
+            return $selectorCollection;
+        } catch (Throwable $ex) {
+            throw new WebCrawlerException(sprintf(
+                    'Error has occurred while extracting page selectors. Message: %s',
+                    $ex->getMessage()
+                )
+            );
+        }
+    }
+
+    /**
+     * @return DomainLinks
+     * @param UrlPath $urlPath
+     * @param callable|null $filterCallback
+     * @param DomainLinks|null $domainLinks -> if not null, Crawler will continue from last registered checkpoint
+     *
      * @throws Throwable
-     * @throws ValidationException
      */
-    public function crawlDomainLinks(CrawlDomainLinksDto $crawlerGetDomainLinks, ?int $limit = null, ?int $crawlingHistoryId = null)
+    public function getDomainLinks(UrlPath $urlPath, ?callable $filterCallback = null, ?int $limit = null, ?DomainLinks $domainLinks = null): DomainLinks
     {
-        $this->dtoValidator->validate($crawlerGetDomainLinks);
+        $crawler = new Crawler(null, $urlPath->getUrl());
 
-        $filterCallback = function ($url) use ($crawlerGetDomainLinks) {
-            foreach ($crawlerGetDomainLinks->getExcludedPaths() as $excludedPlace) {
-                if (preg_match(sprintf('/%s/', preg_quote($excludedPlace, '/')), $url)) {
-                    return true;
-                }
-            }
-
-            return false;
-        };
-
-        $domainUrlPath = new UrlPath($crawlerGetDomainLinks->getDomainUrl());
-
-        $domain = $this->domainRepository->findOneBy(['name' => $domainUrlPath->getDomain()]);
-
-        if (is_null($domain)) {
-            $domain = (new Domain())
-                ->setName($domainUrlPath->getDomain());
-            $this->entityManager->persist($domain);
-        }
-
-        if (!is_null($crawlingHistoryId)) {
-            /** @var CrawlingHistory|null $crawlingHistory */
-            $crawlingHistory = $this->entityManager->find(CrawlingHistory::class, $crawlingHistoryId);
-
-            if (!is_null($crawlingHistory)) {
-                if ($crawlingHistory->getExtractedLinks() === $crawlingHistory->getCrawledLinks()) {
-                    return;
-                }
-
-                $domainLinks = new DomainLinks(
-                    $crawlingHistory->getExtractedLinks(),
-                    $crawlingHistory->getCrawledLinks(),
-                    $crawlingHistory->getFileName()
-                );
-            }
-        }
-
-        $domainLinks = $this->webCrawler->getDomainLinks($domainUrlPath, $filterCallback, $limit, $domainLinks ?? null);
-
-        if (isset($crawlingHistory) && !is_null($crawlingHistory)) {
-            $crawlingHistory
-                ->setCrawledLinks($domainLinks->getCrawledLinks())
-                ->setExtractedLinks($domainLinks->getExtractedLinks());
+        if (!is_null($domainLinks)) {
+            $extractedLinks = $domainLinks->getExtractedLinks();
+            $crawledLinks = $domainLinks->getCrawledLinks();
         } else {
-            $crawlingHistory = (new CrawlingHistory())
-                ->setDomain($domain)
-                ->setFileName($domainLinks->getFileName())
-                ->setCrawledLinks($domainLinks->getCrawledLinks())
-                ->setUpdatedAt(new \DateTime('now'))
-                ->setExtractedLinks($domainLinks->getExtractedLinks());
-
-            $this->entityManager->persist($crawlingHistory);
+            $extractedLinks = 0;
+            $crawledLinks = 0;
         }
 
-        $this->entityManager->flush();
+        $pageLinksFile = $this->crawledResourceManager->getDomainCrawledLinksFile($urlPath, $domainLinks);
+
+        do {
+            foreach ($this->createRequests($pageLinksFile, $crawledLinks) as $httpResponsesChunk) {
+                foreach ($this->httpClient->stream($httpResponsesChunk, 3) as $response => $chunk) {
+                    try {
+                        if ($chunk->isFirst() || $chunk->isTimeout()) {
+                            $crawledLinks++;
+                        }
+
+                        if (
+                            $chunk->isFirst()
+                            && (
+                                strpos($response->getHeaders(false)['content-type'][0],'text/html') === false
+                                || $response->getStatusCode() >= 400
+                            )
+                        ) {
+                            $response->cancel();
+                            continue;
+                        } elseif ($chunk->isLast()) {
+                            $document = $response->getContent(false);
+                            $pageLinks = $this->extractPageLinks($crawler, $document, $urlPath->getDomain(), $filterCallback);
+
+                            $this->cacheHtmlDoc($document, $response);
+
+                            $pageLinksFile->rewind();
+                            while (!$pageLinksFile->eof()) {
+                                if (($key = array_search(rtrim($pageLinksFile->fgets()), $pageLinks)) !== false) {
+                                    unset($pageLinks[$key], $key);
+                                    continue;
+                                } elseif (empty($pageLinks)) {
+                                    break;
+                                }
+                            }
+
+                            foreach ($pageLinks as $pageLink) {
+                                $this->logger->info(sprintf('Crawled url [%s]', $pageLink));
+                                $pageLinksFile->fwrite(sprintf("%s\n", $pageLink));
+                                $extractedLinks++;
+                            }
+
+                            unset($pageLinks, $document);
+                        }
+                    } catch (TransportExceptionInterface $e) {
+                        $this->logger->warning('Network error has occurred', [$e->getMessage()]);
+                    } catch (Throwable $e) {
+                        $this->logger->critical(sprintf(
+                            'Something went terrible wrong. File with crawled URLs is going to be deleted. [%s]',
+                            $e->getMessage(),
+                        ), [$e->getTraceAsString()]);
+
+                        unlink($pageLinksFile);
+                        break 3;
+                    }
+                }
+
+                if (!is_null($limit) && $limit <= $crawledLinks) {
+                    break 2;
+                }
+            }
+        } while ($extractedLinks !== $crawledLinks);
+
+        return new DomainLinks($extractedLinks, $crawledLinks, $pageLinksFile->getFilename());
     }
 
     /**
-     * @return SplFileObject
-     * @throws EntityNotFoundException
-     * @throws Exception
-     * @param FilterCrawledLinksDto $filterDomainLinksDto
+     * @return array
+     * @param string $document HTML document
+     * @param string $domain
+     * @param callable $filterCallback
+     * @param Crawler $crawler
      */
-    public function getDomainLinksByPattern(FilterCrawledLinksDto $filterDomainLinksDto, bool $refresh = false): SplFileObject
+    private function extractPageLinks(Crawler $crawler, string &$document, string $domain, callable &$filterCallback)
     {
-        $this->dtoValidator->validate($filterDomainLinksDto);
+        $crawler->add($document);
+        $links = $crawler->filter('a')->links();
+        $crawler->clear();
+        $crawledLinks = [];
 
-        /** @var CrawlingHistory|null $crawlingHistory */
-        $crawlingHistory = $this->entityManager->find(
-            CrawlingHistory::class,
-            $filterDomainLinksDto->getCrawlingHistoryId()
-        );
+        foreach ($links as $link) {
+            $url = new UrlPath($link->getUri());
 
-        if (is_null($crawlingHistory)) {
-            throw new EntityNotFoundException('Given domain has not been found');
+            if (
+                $url->isValid() === false
+                && $url->isRelative() === false
+                || $url->getDomain() !== $domain
+                || $filterCallback($url->getUrl()) ?? false
+            ) {
+                continue;
+            }
+
+            array_push($crawledLinks, $url->getUrl());
         }
 
-        $domainName = $crawlingHistory->getDomain()->getName();
-        if ($refresh) {
-            $this->crawledResourceManager->removeFilteredDomainLinks($filterDomainLinksDto, $domainName);
+        unset($links);
+
+        return array_unique($crawledLinks);
+    }
+
+    private function cacheHtmlDoc(string $document, ResponseInterface $response): void
+    {
+        try {
+            $cacheItem = $this->cacheItemPool->getItem(base64_encode($response->getInfo()['url']));
+
+            if ($this->cacheItemPool->hasItem($cacheItem->getKey())) {
+                $this->cacheItemPool->deleteItem($cacheItem->getKey());
+            }
+
+            $cacheItem->set($document);
+
+            $this->cacheItemPool->save($cacheItem);
+        } catch (CacheException $ex) {
+            $this->logger->warning('Problem has occur while trying to cache HTML document.', [
+                $ex->getMessage()
+            ]);
+        }
+    }
+
+    private function createRequests(SplFileObject $file, int $crawledLinks): Generator
+    {
+        $urls = [];
+
+        if ($crawledLinks >= 0) {
+            $file->seek($crawledLinks);
         }
 
-        $filteredLinksFile = $this->crawledResourceManager->getFilteredDomainLinksFile(
-            $domainName,
-            $filterDomainLinksDto->getEncodedPattern()
-        );
-
-        if ($filteredLinksFile->getSize() > 0) {
-            return $filteredLinksFile;
+        while (!$file->eof()) {
+            $line = rtrim($file->fgets());
+            if (!empty($line)) {
+                array_push($urls, $line);
+            }
         }
 
-        $this->filterDomainLinksByPattern($filterDomainLinksDto, $filteredLinksFile, $crawlingHistory);
-
-        return $filteredLinksFile;
+        foreach (array_chunk($urls, self::MAX_REQUESTS_CHUNKS_SIZE) as $urlsChunk) {
+            yield array_map(function (string $url) {
+                return $this->httpClient->request('GET', $url);
+            }, $urlsChunk);
+        }
     }
 
     /**
-     * @throws Exception
-     * @param SplFileObject $filteredLinksFile
-     * @param CrawlingHistory $crawlingHistory
-     * @param FilterCrawledLinksDto $filterDomainLinksDto
+     * @return Selector
+     * @throws WebCrawlerException
+     * @param Selector $selector
+     * @param Crawler $crawler
      */
-    private function filterDomainLinksByPattern(
-        FilterCrawledLinksDto $filterDomainLinksDto,
-        SplFileObject $filteredLinksFile,
-        CrawlingHistory $crawlingHistory
-    ): void {
-        $filteredLinksQuantity = $this->crawledResourceManager->filterDomainLinksByPattern(
-            $filterDomainLinksDto->getPattern(),
-            $filteredLinksFile,
-            $crawlingHistory
+    private function extractSelectors(Selector &$selector, Crawler $crawler): Selector
+    {
+        switch ($selector->getType()) {
+            case Selector::CSS_TYPE:
+                $selector->setValue(
+                    $crawler->filter($selector->getPath())->text()
+                );
+
+                return $selector;
+            case Selector::XPATH_TYPE:
+                $selector->setValue(
+                    $crawler->filterXPath($selector->getPath())
+                );
+
+                return $selector;
+        }
+
+        throw new WebCrawlerException(sprintf(
+                'Selector type [%s] is not supported',
+                $selector->getType()
+            )
         );
-
-        $crawlingPattern = new CrawlingPattern();
-        $crawlingPattern
-            ->setPattern($filterDomainLinksDto->getPattern())
-            ->setUrlsQuantity($filteredLinksQuantity);
-
-        $crawlingHistory->addCrawlingPattern($crawlingPattern);
-        $this->entityManager->persist($crawlingPattern);
-        $this->entityManager->flush();
     }
 }

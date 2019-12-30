@@ -4,7 +4,7 @@ namespace App\Command;
 
 use App\Dto\Crawler\CrawlDomainLinksDto;
 use App\Exception\ValidationException;
-use App\WebCrawler\WebCrawlerFacade;
+use App\WebCrawler\WebCrawlerFacadee;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -13,10 +13,10 @@ use Throwable;
 
 class WebCrawlerCommand extends Command
 {
-    /** @var WebCrawlerFacade */
+    /** @var WebCrawlerFacadee */
     private $webCrawlerFacade;
 
-    public function __construct(WebCrawlerFacade $webCrawlerFacade)
+    public function __construct(WebCrawlerFacadee $webCrawlerFacade)
     {
         parent::__construct('crawler:extract:domain-links');
 

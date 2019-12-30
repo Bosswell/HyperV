@@ -3,7 +3,7 @@
 namespace App\Dto\User;
 
 use Symfony\Component\Validator\Constraints as Assert;
-use App\Validator\Constraints\UniqueDto;
+use App\Validator\Constraints\UniqueMessage;
 
 /**
  * @UniqueDto(

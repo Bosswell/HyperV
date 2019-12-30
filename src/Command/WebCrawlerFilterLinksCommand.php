@@ -2,12 +2,9 @@
 
 namespace App\Command;
 
-use App\Dto\Crawler\CrawlDomainLinksDto;
 use App\Dto\Crawler\FilterCrawledLinksDto;
-use App\Exception\ValidationException;
-use App\WebCrawler\WebCrawlerFacade;
+use App\WebCrawler\WebCrawlerFacadee;
 use Doctrine\ORM\EntityNotFoundException;
-use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -15,10 +12,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class WebCrawlerFilterLinksCommand extends Command
 {
-    /** @var WebCrawlerFacade */
+    /** @var WebCrawlerFacadee */
     private $webCrawlerFacade;
 
-    public function __construct(WebCrawlerFacade $webCrawlerFacade)
+    public function __construct(WebCrawlerFacadee $webCrawlerFacade)
     {
         parent::__construct('crawler:filter:links');
 
@@ -45,9 +42,7 @@ class WebCrawlerFilterLinksCommand extends Command
         $crawlerGetDomainLinks = new FilterCrawledLinksDto($input->getOptions());
 
         $output->writeln('Filtering links..');
-
         $this->webCrawlerFacade->getDomainLinksByPattern($crawlerGetDomainLinks, $input->getOption('refresh'));
-
         $output->writeln('Links has been filtered');
 
         return 0;

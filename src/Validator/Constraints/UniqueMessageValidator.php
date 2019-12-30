@@ -16,7 +16,7 @@ use Symfony\Component\Validator\ConstraintValidator;
 use Symfony\Component\Validator\Exception\ConstraintDefinitionException;
 use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
-class UniqueDtoValidator extends ConstraintValidator
+class UniqueMessageValidator extends ConstraintValidator
 {
     /**
      * @var ManagerRegistry
@@ -43,7 +43,7 @@ class UniqueDtoValidator extends ConstraintValidator
 
     public function validate ($object, Constraint $constraint)
     {
-        if (!$constraint instanceof UniqueDto) {
+        if (!$constraint instanceof UniqueMessage) {
             throw new UnexpectedTypeException($constraint, __NAMESPACE__ . '\UniqueDto');
         }
 
@@ -131,7 +131,7 @@ class UniqueDtoValidator extends ConstraintValidator
         }
     }
 
-    private function getRepository (UniqueDto $constraint, ?ObjectManager $manager = null): Selectable
+    private function getRepository (UniqueMessage $constraint, ?ObjectManager $manager = null): Selectable
     {
         if ($manager === null) {
             $manager = $this->getManager($constraint);
@@ -149,7 +149,7 @@ class UniqueDtoValidator extends ConstraintValidator
         return $repository;
     }
 
-    private function getManager (UniqueDto $constraint): ObjectManager
+    private function getManager (UniqueMessage $constraint): ObjectManager
     {
         if ($constraint->em !== null) {
             return $this->doctrine->getManager($constraint->em);

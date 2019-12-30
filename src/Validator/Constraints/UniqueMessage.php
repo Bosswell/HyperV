@@ -11,7 +11,7 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
  * @Annotation
  * @Target({"CLASS", "ANNOTATION"})
  */
-class UniqueDto extends Constraint
+class UniqueMessage extends Constraint
 {
     public $message = 'This value is already used.';
 

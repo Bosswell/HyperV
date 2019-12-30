@@ -10,7 +10,7 @@ use Symfony\Component\Serializer\Normalizer\PropertyNormalizer;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\Exception;
 
-final class DtoConverter implements ParamConverterInterface
+final class MessageConverter implements ParamConverterInterface
 {
     /**
      * @param Request $request

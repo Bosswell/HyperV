@@ -10,7 +10,7 @@ use SplFileObject;
 use Exception;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-final class CrawlerResourcesManager
+final class ResourcesManager
 {
     /** @var string */
     private $crawledLinksDir;
@@ -49,15 +49,15 @@ final class CrawlerResourcesManager
     /**
      * @throws Exception
      * @param string $domainName
-     * @param FilterCrawledLinksDto $filterCrawledLinksDto
+     * @param string $encodedPattern
      */
-    public function removeFilteredDomainLinks(FilterCrawledLinksDto $filterCrawledLinksDto, string $domainName): void
+    public function removeFilteredDomainLinks(string $encodedPattern, string $domainName): void
     {
         $filePath = sprintf(
             '%s%s%s.txt',
             $this->crawledLinksDir,
             $domainName,
-            $filterCrawledLinksDto->getEncodedPattern()
+            $encodedPattern
         );
 
         if (
@@ -93,7 +93,7 @@ final class CrawlerResourcesManager
     }
 
     /**
-     * @return int -> filtered links
+     * @return int -> quantity of filtered links
      * @throws Exception
      * @param CrawlingHistory $crawlingHistory
      * @param string $pattern

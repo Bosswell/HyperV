@@ -1,12 +1,11 @@
 <?php
 
-
-namespace App\Dto\Crawler;
+namespace App\Message\Crawler;
 
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-class FilterCrawledLinksDto
+class FilterCrawledLinksMessage
 {
     /**
      * @var UuidInterface
@@ -26,16 +25,35 @@ class FilterCrawledLinksDto
      */
     private $pattern;
 
+    /**
+     * @var bool
+     *
+     * @Assert\Type(
+     *     type="bool",
+     *     message="The value {{ value }} is not a valid {{ type }}."
+     * )
+     */
+    private $refresh;
+
     public function __construct(?array $data = null)
     {
         $this->crawlingHistoryId = $data['crawlingHistoryId'] ?? null;
         $this->pattern = $data['pattern'] ?? null;
+        $this->refresh = $data['refresh'] ?? false;
     }
 
     /**
-     * @return UuidInterface
+     * @return bool
      */
-    public function getCrawlingHistoryId(): UuidInterface
+    public function isRefresh(): bool
+    {
+        return $this->refresh;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCrawlingHistoryId(): int
     {
         return $this->crawlingHistoryId;
     }
@@ -46,5 +64,13 @@ class FilterCrawledLinksDto
     public function getPattern(): string
     {
         return $this->pattern;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEncodedPattern(): string
+    {
+        return base64_encode($this->crawlingHistoryId . $this->pattern);
     }
 }
