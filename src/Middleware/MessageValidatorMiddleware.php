@@ -1,6 +1,6 @@
 <?php
 
-namespace App\BusMiddleware;
+namespace App\Middleware;
 
 use App\Exception\ValidationException;
 use App\Service\MessageValidator;

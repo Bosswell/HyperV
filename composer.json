@@ -5,6 +5,7 @@
         "php": "^7.3.9",
         "ext-ctype": "*",
         "ext-iconv": "*",
+        "ext-json": "*",
         "doctrine/annotations": "^1.6",
         "league/fractal": "^0.18.0",
         "lexik/jwt-authentication-bundle": "^2.6",

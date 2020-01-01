@@ -2,20 +2,20 @@
 
 namespace App\Event\User;
 
-use App\Dto\User\UserRegister;
+use App\Message\User\RegisterUserMessage;
 use Symfony\Contracts\EventDispatcher\Event;
 
 class UserRegisteredEvent extends Event
 {
-    private $userRegisterDto;
+    private $registerUserMessage;
 
-    public function __construct(UserRegister $userRegisterDto)
+    public function __construct(RegisterUserMessage $registerUserMessage)
     {
-        $this->userRegisterDto = $userRegisterDto;
+        $this->registerUserMessage = $registerUserMessage;
     }
 
-    public function getUser(): UserRegister
+    public function getUser(): RegisterUserMessage
     {
-       return $this->userRegisterDto;
+       return $this->registerUserMessage;
     }
 }

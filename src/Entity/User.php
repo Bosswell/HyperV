@@ -68,12 +68,56 @@ class User implements UserInterface
      * User constructor.
      * @throws Exception
      */
-    public function __construct()
+    public function __construct(?array $data = null)
     {
         $this->id = Uuid::uuid4()->toString();
         $this->createdAt = new DateTime('now');
         $this->roles = ['ROLE_USER'];
         $this->isActive = false;
+    }
+
+    /**
+     * @return $this
+     * @param $email
+     */
+    public function setEmail($email): self
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @param string $password
+     */
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @param string $firstName
+     */
+    public function setFirstName(string $firstName): self
+    {
+        $this->firstName = $firstName;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @param string $surname
+     */
+    public function setSurname(string $surname): self
+    {
+        $this->surname = $surname;
+
+        return $this;
     }
 
     /**
@@ -84,14 +128,9 @@ class User implements UserInterface
         $this->password = $encoder->encodePassword($this, $this->password);
     }
 
-    public function activate(): void
+    public function changeState(bool $state): void
     {
-        $this->isActive = true;
-    }
-
-    public function deactivate(): void
-    {
-        $this->isActive = true;
+        $this->isActive = $state;
     }
 
     /**

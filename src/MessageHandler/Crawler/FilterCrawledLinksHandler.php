@@ -1,6 +1,6 @@
 <?php
 
-namespace App\MessageHandler;
+namespace App\MessageHandler\Crawler;
 
 use App\Entity\CrawlingHistory;
 use App\Entity\CrawlingPattern;
@@ -10,11 +10,12 @@ use App\Service\ResourcesManager;
 use App\WebCrawler\WebCrawlerFacade;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\EntityNotFoundException;
+use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Exception;
 
 
-class FilterCrawledLinksHandler
+class FilterCrawledLinksHandler implements MessageHandlerInterface
 {
     /** @var EntityManagerInterface */
     private $entityManager;
@@ -66,6 +67,10 @@ class FilterCrawledLinksHandler
             $filteredLinksFile,
             $crawlingHistory
         );
+
+        if ($filteredLinksFile->getSize() === 0) {
+            return;
+        }
 
         $crawlingPattern = new CrawlingPattern();
         $crawlingPattern

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\MessageHandler;
+namespace App\MessageHandler\Crawler;
 
 use App\Entity\CrawlingHistory;
 use App\Entity\Domain;
@@ -13,11 +13,12 @@ use App\WebCrawler\WebCrawlerFacade;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\InvalidArgumentException;
+use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Throwable;
 
 
-class CrawlDomainLinksHandler
+class CrawlDomainLinksHandler implements MessageHandlerInterface
 {
     /** @var WebCrawlerFacade */
     private $webCrawlerFacade;

@@ -2,25 +2,24 @@
 
 namespace App\Command;
 
-use App\Dto\Crawler\CrawlDomainLinksDto;
-use App\Exception\ValidationException;
-use App\WebCrawler\WebCrawlerFacadee;
+use App\Message\Crawler\CrawlDomainLinksMessage;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Throwable;
+use Symfony\Component\Messenger\MessageBusInterface;
+
 
 class WebCrawlerCommand extends Command
 {
-    /** @var WebCrawlerFacadee */
-    private $webCrawlerFacade;
+    /** @var MessageBusInterface */
+    private $messageBus;
 
-    public function __construct(WebCrawlerFacadee $webCrawlerFacade)
+    public function __construct(MessageBusInterface $messageBus)
     {
         parent::__construct('crawler:extract:domain-links');
 
-        $this->webCrawlerFacade = $webCrawlerFacade;
+        $this->messageBus = $messageBus;
     }
 
     protected function configure()
@@ -35,23 +34,17 @@ class WebCrawlerCommand extends Command
 
     /**
      * @return int
-     * @throws ValidationException
-     * @throws Throwable
      * @param OutputInterface $output
      * @param InputInterface $input
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $crawlerGetDomainLinks = new CrawlDomainLinksDto($input->getOptions());
+        $message = new CrawlDomainLinksMessage($input->getOptions());
 
         $output->writeln('Extracting domain urls..');
         $output->writeln('Visit /var/log/linkCrawler.log to see more details');
 
-        $this->webCrawlerFacade->crawlDomainLinks(
-            $crawlerGetDomainLinks,
-            $input->getOption('limit'),
-            $input->getOption('crawlingHistoryId')
-        );
+        $this->messageBus->dispatch($message);
 
         $output->writeln('Links has been extracted');
 

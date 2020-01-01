@@ -31,7 +31,7 @@ class MessageValidator
                 ]);
             }
 
-            throw new ValidationException(serialize($errors));
+            throw new ValidationException(json_encode($errors));
         }
     }
 }

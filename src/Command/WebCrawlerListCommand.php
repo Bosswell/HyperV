@@ -3,9 +3,7 @@
 namespace App\Command;
 
 use App\Entity\CrawlingHistory;
-use App\Entity\Domain;
 use App\Repository\DomainRepository;
-use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
