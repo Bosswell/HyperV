@@ -35,18 +35,18 @@ class WebCrawlerFacade
     private $cacheItemPool;
 
     /** @var ResourcesManager */
-    private $crawledResourceManager;
+    private $resourceManager;
 
     public function __construct(
         HttpClientInterface $httpClient,
         LoggerInterface $linkCrawlerLogger,
         CacheItemPoolInterface $cacheItemPool,
-        ResourcesManager $crawlerResourcesManager
+        ResourcesManager $resourcesManager
     ) {
         $this->httpClient = $httpClient;
         $this->logger = $linkCrawlerLogger;
         $this->cacheItemPool = $cacheItemPool;
-        $this->crawledResourceManager = $crawlerResourcesManager;
+        $this->resourceManager = $resourcesManager;
     }
 
     /**
@@ -94,7 +94,7 @@ class WebCrawlerFacade
             $crawledLinks = 0;
         }
 
-        $pageLinksFile = $this->crawledResourceManager->getDomainCrawledLinksFile($urlPath, $domainLinks);
+        $pageLinksFile = $this->resourceManager->getDomainCrawledLinksFile($urlPath, $domainLinks);
 
         do {
             foreach ($this->createRequests($pageLinksFile, $crawledLinks) as $httpResponsesChunk) {
@@ -150,7 +150,8 @@ class WebCrawlerFacade
                     }
                 }
 
-                if (!is_null($limit) && $limit <= $crawledLinks) {
+                // $limit equal to 0 mean 'Unlimited'
+                if ($limit !== 0 && $limit <= $crawledLinks) {
                     break 2;
                 }
             }

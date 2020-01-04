@@ -18,10 +18,11 @@ class FilterCrawledLinksMessage
     private $crawlingHistoryId;
 
     /**
+     * @var string
+     *
      * @Assert\NotNull(
      *     message = "You need to specify filtering pattern"
      * )
-     * @var string
      */
     private $pattern;
 

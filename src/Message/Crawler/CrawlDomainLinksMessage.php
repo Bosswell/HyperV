@@ -10,6 +10,9 @@ class CrawlDomainLinksMessage
     /**
      * @var string
      *
+     * @Assert\NotNull(
+     *     message = "You need to specify domain url"
+     * )
      * @Assert\Url(
      *    message = "The domainUrl '{{ value }}' is not a valid url",
      *    protocols = {"http", "https"}
@@ -55,9 +58,9 @@ class CrawlDomainLinksMessage
     }
 
     /**
-     * @return UuidInterface
+     * @return UuidInterface|null
      */
-    public function getCrawlingHistoryId(): UuidInterface
+    public function getCrawlingHistoryId(): ?UuidInterface
     {
         return $this->crawlingHistoryId;
     }

@@ -4,6 +4,7 @@ namespace App\MessageHandler\Crawler;
 
 use App\Entity\CrawlingHistory;
 use App\Entity\Domain;
+use App\Lock\LockFactory;
 use App\Message\Crawler\CrawlDomainLinksMessage;
 use App\Repository\DomainRepository;
 use App\WebCrawler\Utils\DomainLinks;
@@ -46,7 +47,6 @@ class CrawlDomainLinksHandler implements MessageHandlerInterface
 
     /**
      * @throws WebCrawlerException
-     * @throws InvalidArgumentException
      * @throws Throwable
      * @param CrawlDomainLinksMessage $crawlDomainLinksMessage
      */
@@ -54,11 +54,9 @@ class CrawlDomainLinksHandler implements MessageHandlerInterface
     {
         $domainUrlPath = new UrlPath($crawlDomainLinksMessage->getDomainUrl());
 
-        $lockedProcess = $this->cache->get($crawlDomainLinksMessage->getEncodedDomain(), function (CacheItemInterface $item) {
-            return $item->set(getmypid());
-        });
+        $lock = LockFactory::create('domainCrawler');
 
-        if ($lockedProcess !== getmypid()) {
+        if (!$lock->acquire()) {
             throw new WebCrawlerException(sprintf('Crawler is already in process of crawling given domain [%s]', $domainUrlPath->getDomain()));
         }
 
@@ -112,8 +110,7 @@ class CrawlDomainLinksHandler implements MessageHandlerInterface
 
             $this->entityManager->flush();
         } finally {
-            // Remove the block imposed on the process
-            $this->cache->delete($crawlDomainLinksMessage->getEncodedDomain());
+            $lock->release();
         }
     }
 

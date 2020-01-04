@@ -6,6 +6,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use DateTime;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\CrawlingHistoryRepository")
@@ -13,9 +14,12 @@ use DateTime;
 class CrawlingHistory
 {
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
+     * @var UuidInterface
+     *
+     * @ORM\Id
+     * @ORM\Column(type="uuid", unique=true)
+     * @ORM\GeneratedValue(strategy="CUSTOM")
+     * @ORM\CustomIdGenerator(class="Ramsey\Uuid\Doctrine\UuidGenerator")
      */
     private $id;
 
@@ -102,10 +106,14 @@ class CrawlingHistory
         return $this;
     }
 
-    public function getId(): ?int
+    /**
+     * @return UuidInterface
+     */
+    public function getId(): UuidInterface
     {
         return $this->id;
     }
+
 
     public function getCreatedAt(): ?\DateTimeInterface
     {

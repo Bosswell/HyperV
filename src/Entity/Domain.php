@@ -5,6 +5,7 @@ namespace App\Entity;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\DomainRepository")
@@ -12,9 +13,12 @@ use Doctrine\ORM\Mapping as ORM;
 class Domain
 {
     /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
+     * @var UuidInterface
+     *
+     * @ORM\Id
+     * @ORM\Column(type="uuid", unique=true)
+     * @ORM\GeneratedValue(strategy="CUSTOM")
+     * @ORM\CustomIdGenerator(class="Ramsey\Uuid\Doctrine\UuidGenerator")
      */
     private $id;
 
@@ -33,7 +37,10 @@ class Domain
         $this->crawlingHistory = new ArrayCollection();
     }
 
-    public function getId(): ?int
+    /**
+     * @return UuidInterface
+     */
+    public function getId(): UuidInterface
     {
         return $this->id;
     }

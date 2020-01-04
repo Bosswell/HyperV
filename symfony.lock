@@ -162,6 +162,9 @@
     "symfony/http-client-contracts": {
         "version": "v1.1.7"
     },
+    "symfony/lock": {
+        "version": "v4.3.9"
+    },
     "symfony/messenger": {
         "version": "4.3",
         "recipe": {

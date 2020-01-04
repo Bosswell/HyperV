@@ -17,10 +17,10 @@ services:
         resource: '../src/Controller'
         tags: ['controller.service_arguments']
 
-    dto_converter:
-        class: App\Request\ParamConverter\DtoConverter
+    message_converter:
+        class: App\Request\ParamConverter\MessageConverter
         tags:
-            - { name: request.param_converter, priority: -2, converter: dto_converter }
+            - { name: request.param_converter, priority: -2, converter: message_converter }
 
     App\Base\Controller\ApiExceptionController:
         public: true
