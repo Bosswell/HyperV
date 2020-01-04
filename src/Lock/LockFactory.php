@@ -17,9 +17,11 @@ final class LockFactory
 
     public static function create(string $lockName): LockInterface
     {
+        global $kernel;
+
         if (self::$redisStore === null) {
             self::$redisStore = new RedisStore(
-                RedisAdapter::createConnection('redis://cache')
+                RedisAdapter::createConnection($kernel->getContainer()->getParameter('redis.default.dsn'))
             );
         }
 

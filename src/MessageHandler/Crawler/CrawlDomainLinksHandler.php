@@ -12,8 +12,6 @@ use App\WebCrawler\Utils\UrlPath;
 use App\WebCrawler\WebCrawlerException;
 use App\WebCrawler\WebCrawlerFacade;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\InvalidArgumentException;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
 use Symfony\Contracts\Cache\CacheInterface;
 use Throwable;
