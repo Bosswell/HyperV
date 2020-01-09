@@ -16,6 +16,8 @@ services:
         - ./docker/config/my.cnf:/etc/my.cnf
     links:
       - redis
+    arguments:
+      ['@cache.app']
 
   mariadb:
     image: mariadb
