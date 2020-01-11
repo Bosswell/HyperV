@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   app:
-    container_name: testerv.app
+    container_name: hyperv.app
     environment:
         - APACHE_DOCUMENT_ROOT=/var/www/html/public
         - REDIS_URL=redis://cache
@@ -16,8 +16,6 @@ services:
         - ./docker/config/my.cnf:/etc/my.cnf
     links:
       - redis
-    arguments:
-      ['@cache.app']
 
   mariadb:
     image: mariadb
