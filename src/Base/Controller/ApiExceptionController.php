@@ -55,7 +55,7 @@ class ApiExceptionController extends ExceptionController
         ];
 
         if ($exception->getClass() === ValidationException::class) {
-            $error['errors'] = unserialize($exception->getMessage());
+            $error['errors'] = json_decode($exception->getMessage());
         }
 
         if ($this->twig->isDebug()) {

@@ -3,9 +3,10 @@
 namespace App\Message\User;
 
 use App\Validator\Constraints\UniqueMessage;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * @UniqueDto(
+ * @UniqueMessage(
  *     entityClass = "App\Entity\User",
  *     fields = {"email"},
  *     message = "You can't use this email"
@@ -78,7 +79,7 @@ class RegisterUserMessage
     /**
      * @return string
      */
-    public function getEmail(): string
+    public function getEmail(): ?string
     {
         return $this->email;
     }

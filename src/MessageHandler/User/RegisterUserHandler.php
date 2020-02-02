@@ -37,6 +37,7 @@ class RegisterUserHandler implements MessageHandlerInterface
         $user = (new User())
             ->setEmail($registerUserMessage->getEmail())
             ->setFirstName($registerUserMessage->getFirstName())
+            ->setSurname($registerUserMessage->getSurname())
             ->setPassword($registerUserMessage->getPassword())
             ->setEmail($registerUserMessage->getEmail());
 

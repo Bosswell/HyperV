@@ -26,6 +26,6 @@ class MessageValidatorMiddleware implements MiddlewareInterface
         $message = $envelope->getMessage();
         $this->messageValidator->validate($message);
 
-        return $stack->next()->handle($envelope, $stack);
+        return $envelope;
     }
 }
