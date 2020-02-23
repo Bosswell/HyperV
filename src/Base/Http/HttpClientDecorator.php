@@ -28,7 +28,7 @@ class HttpClientDecorator implements HttpClientInterface
             '%s %s %s',
             $method,
             $url,
-            $options
+            json_encode($options)
         ));
 
         /** @var ResponseInterface $response */
@@ -36,7 +36,7 @@ class HttpClientDecorator implements HttpClientInterface
 
         $this->logger->info(sprintf(
             '%s',
-            $response->getInfo() ?? '',
+            json_encode($response->getInfo()) ?? '',
         ));
 
         return $response;

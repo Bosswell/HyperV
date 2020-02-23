@@ -8,10 +8,9 @@ use Symfony\Component\Messenger\Envelope;
 use Symfony\Component\Messenger\Middleware\MiddlewareInterface;
 use Symfony\Component\Messenger\Middleware\StackInterface;
 
-class MessageValidatorMiddleware implements MiddlewareInterface
+final class MessageValidatorMiddleware implements MiddlewareInterface
 {
-    /** @var MessageValidator */
-    private $messageValidator;
+    private MessageValidator $messageValidator;
 
     public function __construct(MessageValidator $messageValidator)
     {
@@ -29,3 +28,4 @@ class MessageValidatorMiddleware implements MiddlewareInterface
         return $stack->next()->handle($envelope, $stack);
     }
 }
+

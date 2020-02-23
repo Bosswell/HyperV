@@ -10,10 +10,9 @@ use Symfony\Component\Lock\Store\RedisStore;
 
 final class LockFactory
 {
-    /** @var RedisStore|null */
-    private static $redisStore = null;
+    private static ?RedisStore $redisStore = null;
 
-    private static $locks = [];
+    private static array $locks = [];
 
     public static function create(string $lockName): LockInterface
     {

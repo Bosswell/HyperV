@@ -3,10 +3,13 @@
 
 namespace App\VehicleWebsite;
 
+use App\Message\Crawler\CrawlAuctionsOverviewsMessage;
+
 interface AuctionServiceInterface
 {
-    /** @return AuctionOverviewInterface[] */
-    public function getAuctionsOverviews(): array;
-
-    public function getServiceName(): string;
+    /**
+     * @param CrawlAuctionsOverviewsMessage $crawlAuctionsOverviewsMessage
+     * @return AuctionOverview[]
+     */
+    public function getAuctionsOverviews(CrawlAuctionsOverviewsMessage $crawlAuctionsOverviewsMessage): array;
 }

@@ -7,8 +7,7 @@ use Swift_Mailer;
 
 class UserListener
 {
-    /** @var Swift_Mailer */
-    private $mailer;
+    private Swift_Mailer $mailer;
 
     public function __construct(Swift_Mailer $mailer)
     {

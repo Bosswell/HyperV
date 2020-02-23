@@ -2,7 +2,6 @@
 
 namespace App\Service;
 
-use App\Dto\Crawler\FilterCrawledLinksDto;
 use App\Entity\CrawlingHistory;
 use App\WebCrawler\Utils\DomainLinks;
 use App\WebCrawler\Utils\UrlPath;
@@ -12,11 +11,8 @@ use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 final class ResourcesManager
 {
-    /** @var string */
-    private $crawledLinksDir;
-
-    /** @var ParameterBagInterface */
-    private $parameterBag;
+    private string $crawledLinksDir;
+    private ParameterBagInterface $parameterBag;
 
     public function __construct(ParameterBagInterface $parameterBag)
     {

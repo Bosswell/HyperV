@@ -5,8 +5,9 @@ namespace App\VehicleWebsite\Otomoto;
 
 
 use App\Base\Http\HttpClientFactory;
-use App\VehicleWebsite\AuctionOverview;
-use App\VehicleWebsite\VehicleWebsiteException;
+use App\VehicleWebsite\AuctionOverviewProvider;
+use Exception;
+use InvalidArgumentException;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
@@ -14,23 +15,30 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 
-class OtomotoClient
+class MobileClient
 {
     private HttpClientInterface $client;
     private string $host;
 
     public function __construct(HttpClientFactory $httpClientFactory)
     {
-        $this->host = 'https://otomoto.pl/';
+        $this->host = 'https://mobile.de/';
         $this->client = $httpClientFactory->createClient();
     }
 
     /**
-     * @return AuctionOverview[]
+     * @return AuctionOverviewProvider[]
      * @throws Throwable
      */
     public function getAuctionsOverviews(string $type, string $searchQuery, int $pageNumber): array
     {
+        if (!in_array($type, self::AVAILABLE_TYPES)) {
+            throw new InvalidArgumentException(sprintf(
+                'Type [%s] is not available',
+                $type
+            ));
+        }
+
         $url = sprintf(
             '/%s/q-%s/?%s',
             $type,
@@ -54,12 +62,12 @@ class OtomotoClient
         try{
             return $this->client->request('GET', $this->host . $url)->getContent();
         } catch (
-            TransportExceptionInterface
-            | ClientExceptionInterface
-            | RedirectionExceptionInterface
-            | ServerExceptionInterface $exception
+        TransportExceptionInterface
+        | ClientExceptionInterface
+        | RedirectionExceptionInterface
+        | ServerExceptionInterface $exception
         ) {
-            throw new VehicleWebsiteException($exception->getMessage());
+            throw new Exception($exception->getMessage());
         }
     }
 }

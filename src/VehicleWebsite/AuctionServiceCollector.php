@@ -4,10 +4,10 @@
 namespace App\VehicleWebsite;
 
 
-class AuctionServiceCollector
+final class AuctionServiceCollector
 {
     /** @var AuctionServiceInterface[] */
-    private $auctionServices = [];
+    private array $auctionServices = [];
 
     public function __construct(AuctionServiceInterface ...$auctionService)
     {
