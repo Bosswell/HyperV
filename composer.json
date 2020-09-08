@@ -4,6 +4,7 @@
     "require": {
         "php": "^7.4.2",
         "ext-ctype": "*",
+        "ext-dom": "*",
         "ext-iconv": "*",
         "ext-json": "*",
         "doctrine/annotations": "^1.6",
@@ -33,7 +34,8 @@
         "symfony/swiftmailer-bundle": "^3.2",
         "symfony/validator": "4.4.*",
         "symfony/web-server-bundle": "4.4.*",
-        "symfony/yaml": "4.4.*"
+        "symfony/yaml": "4.4.*",
+        "wa72/htmlpagedom": "^2.0"
     },
     "require-dev": {
         "symfony/phpunit-bridge": "^4.4",

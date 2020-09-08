@@ -1,10 +1,10 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "71fdba7934a6f0fe6907d62b67f7fcbe",
+    "content-hash": "13bac5ced44b89057c7756f3c38c41c6",
     "packages": [
         {
             "name": "doctrine/annotations",
@@ -5968,6 +5968,64 @@
             "time": "2019-12-28T07:17:28+00:00"
         },
         {
+            "name": "wa72/htmlpagedom",
+            "version": "v2.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/wasinger/htmlpagedom.git",
+                "reference": "34710d592b9865e798b5c35a78166ab1f18ecc8e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/wasinger/htmlpagedom/zipball/34710d592b9865e798b5c35a78166ab1f18ecc8e",
+                "reference": "34710d592b9865e798b5c35a78166ab1f18ecc8e",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.1.0",
+                "symfony/css-selector": "^3.4|^4|^5",
+                "symfony/dom-crawler": "^3.4|^4|^5"
+            },
+            "require-dev": {
+                "mikey179/vfsstream": "^1.6",
+                "phpunit/phpunit": "^7",
+                "wa72/html-pretty-min": "~0.1"
+            },
+            "suggest": {
+                "wa72/html-pretty-min": "Minify or indent HTML documents"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Wa72\\HtmlPageDom\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christoph Singer",
+                    "email": "singer@webagentur72.de",
+                    "homepage": "http://www.webagentur72.de"
+                }
+            ],
+            "description": "jQuery-inspired DOM manipulation extension for Symfony's Crawler",
+            "homepage": "http://github.com/wasinger/htmlpagedom",
+            "keywords": [
+                "crawler",
+                "dom",
+                "html"
+            ],
+            "time": "2019-11-22T09:50:29+00:00"
+        },
+        {
             "name": "zendframework/zend-code",
             "version": "3.4.1",
             "source": {
@@ -7509,8 +7567,9 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": "^7.3.9",
+        "php": "^7.4.2",
         "ext-ctype": "*",
+        "ext-dom": "*",
         "ext-iconv": "*",
         "ext-json": "*"
     },

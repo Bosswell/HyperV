@@ -139,7 +139,7 @@
         "version": "2.0.1"
     },
     "php": {
-        "version": "7.3"
+        "version": "7.4"
     },
     "phpdocumentor/reflection-common": {
         "version": "2.0.0"
@@ -306,6 +306,9 @@
     },
     "symfony/dotenv": {
         "version": "v4.3.11"
+    },
+    "symfony/error-handler": {
+        "version": "v4.4.4"
     },
     "symfony/event-dispatcher": {
         "version": "v4.3.11"
@@ -581,6 +584,9 @@
     },
     "twig/twig": {
         "version": "v2.12.5"
+    },
+    "wa72/htmlpagedom": {
+        "version": "v2.0.1"
     },
     "webmozart/assert": {
         "version": "1.5.0"

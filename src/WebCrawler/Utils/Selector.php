@@ -3,6 +3,7 @@
 namespace App\WebCrawler\Utils;
 
 use InvalidArgumentException;
+use Symfony\Component\DomCrawler\Crawler;
 
 class Selector
 {
@@ -25,6 +26,8 @@ class Selector
 
     /** @var string */
     private $type;
+
+    private Crawler $crawler;
 
     public function __construct(string $name, string $path, string $type)
     {
@@ -68,19 +71,23 @@ class Selector
         return $this->path;
     }
 
-    /**
-     * @return string
-     */
     public function getValue(): string
     {
-        return $this->value;
+        return trim($this->crawler->text());
     }
 
-    /**
-     * @param string $value
-     */
-    public function setValue(string $value): void
+    public function getOuterHtml(): string
     {
-        $this->value = trim($value);
+        return trim($this->crawler->outerHtml());
+    }
+
+    public function getCrawler(): Crawler
+    {
+        return $this->crawler;
+    }
+
+    public function setCrawler(Crawler $crawler): void
+    {
+        $this->crawler = clone $crawler;
     }
 }

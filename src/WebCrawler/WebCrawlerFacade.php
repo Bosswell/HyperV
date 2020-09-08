@@ -245,13 +245,13 @@ class WebCrawlerFacade
     {
         switch ($selector->getType()) {
             case Selector::CSS_TYPE:
-                $selector->setValue(
-                    $crawler->filter($selector->getPath())->text()
+                $selector->setCrawler(
+                    $crawler->filter($selector->getPath())
                 );
 
                 return $selector;
             case Selector::XPATH_TYPE:
-                $selector->setValue(
+                $selector->setCrawler(
                     $crawler->filterXPath($selector->getPath())
                 );
 
